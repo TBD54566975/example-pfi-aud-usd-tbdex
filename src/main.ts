@@ -1,11 +1,11 @@
 import './polyfills.js'
-import './seed-offerings.js'
+import {OfferingRepository} from './offerings.js'
 
 import type { Rfq, Order, Close } from '@tbdex/http-server'
 
 import log from './logger.js'
 import { config } from './config.js'
-import { Postgres, ExchangeRespository, OfferingRepository } from './db/index.js'
+import { Postgres, ExchangeRespository } from './db/index.js'
 import { HttpServerShutdownHandler } from './http-shutdown-handler.js'
 import { TbdexHttpServer } from '@tbdex/http-server'
 

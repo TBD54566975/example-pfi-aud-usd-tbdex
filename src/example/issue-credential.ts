@@ -1,5 +1,6 @@
 import { DevTools } from '@tbdex/http-client'
 import { createOrLoadDid } from './utils.js'
+import fs from 'node:fs'
 
 
 // get the did from the command line parameter
@@ -26,6 +27,9 @@ const { signedCredential } = await DevTools.createCredential({
 })
 
 console.log('Copy this signed credential for later use:\n\n', signedCredential)
+// write to a file
+fs.writeFileSync('signed-credential.txt', signedCredential)
+
 
 
 

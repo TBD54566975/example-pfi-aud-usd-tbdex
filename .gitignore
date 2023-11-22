@@ -5,3 +5,4 @@ node_modules/
 alice.json
 issuer.json
 server-did.txt
+signed-credential.txt

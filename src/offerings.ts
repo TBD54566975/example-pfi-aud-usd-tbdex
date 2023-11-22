@@ -1,12 +1,4 @@
-import './polyfills.js'
 
-import { Postgres, OfferingRepository } from './db/index.js'
-import { Offering } from '@tbdex/http-server'
-import { config } from './config.js'
-
-await Postgres.connect()
-// await Postgres.ping()
-await Postgres.clear()
 
 const offering = Offering.create({
   metadata: { from: config.did.id },
@@ -65,15 +57,14 @@ const offering = Offering.create({
                 pattern: '^SanctionCredential$'
               }
             }
-            // uncommend the following with a valid issuer did from npm run example-create-issuer:
-            //,
-            //{
-            //  path: ['$.issuer'],
-            //  filter: {
-            //    type: 'string',
-            //    const: 'did:key:z6MkrA3GSkK3hxy4oQvezUSwTMR28Y97ZzYLHhBRjySLKfjB'
-            //  }
-            //}
+            ,
+            {
+              path: ['$.issuer'],
+              filter: {
+                type: 'string',
+                const: 'did:key:z6MkjjUeThBMoaBZn8xm48b8VZ4rnrZNQ9gM38X7TAkU3zRN'
+              }
+            }
           ]
         }
       }]
@@ -82,4 +73,29 @@ const offering = Offering.create({
 })
 
 await offering.sign(config.did.privateKey, config.did.kid)
-await OfferingRepository.create(offering)
+
+// Initialize an array of hardcoded offerings
+const hardcodedOfferings: Offering[] = [];
+hardcodedOfferings.push(offering);
+
+import { OfferingsApi, Offering } from '@tbdex/http-server'
+import { config } from './config.js'
+
+
+
+export class HardcodedOfferingRepository implements OfferingsApi {
+  // Retrieve a single offering if found
+  async getOffering(opts: { id: string }): Promise<Offering | undefined> {
+    // Find the offering with the matching ID
+    return hardcodedOfferings.find(offering => offering.id === opts.id);
+  }
+
+  // Retrieve a list of offerings
+  async getOfferings(): Promise<Offering[] | undefined> {
+    // Return all hardcoded offerings
+    return hardcodedOfferings
+  }
+}
+
+// Export an instance of the repository
+export const OfferingRepository = new HardcodedOfferingRepository()
