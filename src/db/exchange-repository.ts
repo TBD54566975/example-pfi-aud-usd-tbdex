@@ -4,6 +4,11 @@ import { Message } from '@tbdex/http-server'
 import { Postgres } from './postgres.js'
 import { config } from '../config.js'
 
+await Postgres.connect()
+// await Postgres.ping()
+await Postgres.clear()
+
+
 class _ExchangeRepository implements ExchangesApi {
   async getExchanges(opts: { filter: GetExchangesFilter }): Promise<MessageKindClass[][]> {
     // TODO: try out GROUP BY! would do it now, just unsure what the return structure looks like
@@ -70,6 +75,7 @@ class _ExchangeRepository implements ExchangesApi {
   }
 
   async getRfq(opts: { exchangeId: string }): Promise<Rfq> {
+    console.log('getting rfq for id', opts.exchangeId)
     return await this.getMessage({ exchangeId: opts.exchangeId, messageKind: 'rfq' }) as Rfq
   }
 
@@ -105,6 +111,8 @@ class _ExchangeRepository implements ExchangesApi {
   }
 
   async getMessage(opts: { exchangeId: string, messageKind: MessageKind }) {
+    console.log("getting message", opts.exchangeId, opts.messageKind)
+    console.log("Postgres client", Postgres.client)
     const result = await Postgres.client.selectFrom('exchange')
       .select(['message'])
       .where(eb => eb.and({
@@ -120,6 +128,7 @@ class _ExchangeRepository implements ExchangesApi {
   }
 
   async addMessage(opts: { message: MessageKindClass }) {
+    console.log("adding message", opts.message)
     const { message } = opts
     const subject = aliceMessageKinds.has(message.kind) ? message.from : message.to
 

@@ -1,3 +1,5 @@
+import { OfferingsApi, Offering } from '@tbdex/http-server'
+import { config } from './config.js'
 
 
 const offering = Offering.create({
@@ -20,7 +22,7 @@ const offering = Offering.create({
           'type': 'object',
           'required': [
             'accountNumber',
-            'bsbNumber', 
+            'bsbNumber',
             'accountName'
           ],
           'additionalProperties': false,
@@ -34,7 +36,7 @@ const offering = Offering.create({
               'title': 'BSB Number',
               'description': 'BSB Number',
               'type': 'string'
-            }, 
+            },
             'accountName': {
               'title': 'Account Name',
               'description': 'Account Name',
@@ -75,11 +77,8 @@ const offering = Offering.create({
 await offering.sign(config.did.privateKey, config.did.kid)
 
 // Initialize an array of hardcoded offerings
-const hardcodedOfferings: Offering[] = [];
-hardcodedOfferings.push(offering);
-
-import { OfferingsApi, Offering } from '@tbdex/http-server'
-import { config } from './config.js'
+const hardcodedOfferings: Offering[] = []
+hardcodedOfferings.push(offering)
 
 
 

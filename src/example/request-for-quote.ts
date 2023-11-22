@@ -1,21 +1,16 @@
 import { TbdexHttpClient, Rfq, Quote, Order, OrderStatus } from '@tbdex/http-client'
 import { createOrLoadDid } from './utils.js'
+import fs from 'fs/promises'
 
 //
-// get the PFI did from the command line parameter
+// get the PFI did and credential from earlier.
 //
-const pfiDid = process.argv[2]
-if (!pfiDid) {
-  console.error('Please put in the DID of the PFI as the first parameter')
-  process.exit(1)
-}
+const pfiDid = await fs.readFile('server-did.txt', 'utf-8')
+const signedCredential = await fs.readFile('signed-credential.txt', 'utf-8')
 
 
-const signedCredential = process.argv[3]
-if (!signedCredential) {
-  console.error('Please put in the signed credential as the second parameter')
-  process.exit(1)
-}
+
+
 
 //
 //  Connect to the PFI and get the list of offerings (offerings are resources - anyone can ask for them)
@@ -45,29 +40,28 @@ const rfq = Rfq.create({
     offeringId: offering.id,
     payinSubunits: '100',
     payinMethod: {
-      kind: 'DEBIT_CARD',
-      paymentDetails: {
-        cvv: '123',
-        cardNumber: '1234567890123456789',
-        expiryDate: '10/23',
-        cardHolderName: 'Ephraim Mcgilacutti'
-      }
+      kind: 'USDC_WALLET',
+      paymentDetails: {} // empty as per the new schema
     },
     payoutMethod: {
-      kind: 'BTC_ADDRESS',
+      kind: 'AUSTRALIAN_BANK_ACCOUNT',
       paymentDetails: {
-        btcAddress: '0x1234567890'
+        accountNumber: 'your_account_number', // replace with actual account number
+        bsbNumber: 'your_bsb_number', // replace with actual BSB number
+        accountName: 'your_account_name' // replace with actual account name
       }
     },
     claims: [signedCredential]
   }
-})
+});
+
 
 await rfq.sign(privateKeyJwk, kid)
 
+console.log("rfq id:", rfq.id)
+
 const resp = await TbdexHttpClient.sendMessage({ message: rfq })
 console.log('send rfq response', JSON.stringify(resp, null, 2))
-console.log(resp)
 
 //
 //
