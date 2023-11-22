@@ -11,60 +11,41 @@ await Postgres.clear()
 const offering = Offering.create({
   metadata: { from: config.did.id },
   data: {
-    description: 'fake offering 1',
-    payoutUnitsPerPayinUnit: '0.0069', // ex. we send 100 dollars, so that means 14550.00 KES
-    payoutCurrency: { currencyCode: 'KES' },
+    description: 'rip off offering USD to AUD',
+    payoutUnitsPerPayinUnit: '1.1', // ex. we send 100 dollars, so that means 110 AUD - clearly not a good price!
+    payoutCurrency: { currencyCode: 'AUD' },
     payinCurrency: { currencyCode: 'USD' },
     payinMethods: [{
-      kind: 'USD_LEDGER',
+      kind: 'USDC_WALLET',
       requiredPaymentDetails: {}
     }],
     payoutMethods: [
       {
-        kind: 'MOMO_MPESA',
+        kind: 'AUSTRALIAN_BANK_ACCOUNT',
         requiredPaymentDetails: {
           '$schema': 'http://json-schema.org/draft-07/schema#',
-          'title': 'Mobile Money Required Payment Details',
-          'type': 'object',
-          'required': [
-            'phoneNumber',
-            'reason'
-          ],
-          'additionalProperties': false,
-          'properties': {
-            'phoneNumber': {
-              'title': 'Mobile money phone number',
-              'description': 'Phone number of the Mobile Money account',
-              'type': 'string'
-            },
-            'reason': {
-              'title': 'Reason for sending',
-              'description': 'To abide by the travel rules and financial reporting requirements, the reason for sending money',
-              'type': 'string'
-            }
-          }
-        }
-      },
-      {
-        kind: 'BANK_FIRSTBANK',
-        requiredPaymentDetails: {
-          '$schema': 'http://json-schema.org/draft-07/schema#',
-          'title': 'Bank Transfer Required Payment Details',
+          'title': 'Australian Bank Account Required Payment Details',
           'type': 'object',
           'required': [
             'accountNumber',
-            'reason'
+            'bsbNumber', 
+            'accountName'
           ],
           'additionalProperties': false,
           'properties': {
             'accountNumber': {
-              'title': 'Bank account number',
-              'description': 'Bank account of the recipient\'s bank account',
+              'title': 'Account Number',
+              'description': 'Account Number',
               'type': 'string'
             },
-            'reason': {
-              'title': 'Reason for sending',
-              'description': 'To abide by the travel rules and financial reporting requirements, the reason for sending money',
+            'bsbNumber': {
+              'title': 'BSB Number',
+              'description': 'BSB Number',
+              'type': 'string'
+            }, 
+            'accountName': {
+              'title': 'Account Name',
+              'description': 'Account Name',
               'type': 'string'
             }
           }
