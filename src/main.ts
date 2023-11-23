@@ -52,9 +52,15 @@ httpApi.submit('rfq', async (ctx, rfq) => {
       },
       data: {
         expiresAt: new Date(2024, 4, 1).toISOString(),
+        paymentInstructions : {
+          payin : {
+            link: "usdc://pay?address=0x1234567890",
+            instruction: "send funds to the supplied address"            
+          }
+        },
         payin: {
           currencyCode: 'USDC',
-          amountSubunits: '100'
+          amountSubunits: '100',
         },
         payout: {
           currencyCode: 'AUD',
