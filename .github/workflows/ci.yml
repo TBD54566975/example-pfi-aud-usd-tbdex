@@ -46,8 +46,6 @@ jobs:
     - name: Run migration scripts
       run: |
         ./db/scripts/migrate
-    - name: Seed offerings
-      run: npm run seed-offerings
     - name: Run server and tests
       run: |
         npm run server &
