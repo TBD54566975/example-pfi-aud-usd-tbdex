@@ -17,7 +17,7 @@ const signedCredential = await fs.readFile('signed-credential.txt', 'utf-8')
 //
 const { data } = await TbdexHttpClient.getOfferings({ pfiDid: pfiDid })
 const [ offering ] = data
-console.log('offering:', JSON.stringify(offering, null, 2))
+//console.log('offering:', JSON.stringify(offering, null, 2))
 
 
 //
@@ -61,6 +61,7 @@ await rfq.sign(privateKeyJwk, kid)
 console.log("rfq id:", rfq.id)
 
 const resp = await TbdexHttpClient.sendMessage({ message: rfq })
+// asser that the response is a success
 console.log('send rfq response', JSON.stringify(resp, null, 2))
 
 //
@@ -81,8 +82,9 @@ const exchanges = await TbdexHttpClient.getExchanges({
 const [ exchange ] = exchanges.data
 for (const message of exchange) {
   if (message instanceof Quote) {
-    console.log('we have a quote!')
+    
     const quote = message as Quote
+    console.log('we have a quote!', quote)
 
     // Place an order against that quote:
     const order = Order.create({
@@ -90,7 +92,7 @@ for (const message of exchange) {
     })
     await order.sign(privateKeyJwk, kid)
     const orderResponse = await TbdexHttpClient.sendMessage({ message: order })
-    console.log('orderResponse', orderResponse)
+    console.log('orderResponse',  JSON.stringify(orderResponse, null, 2))
 
     // finally we poll for response.
     const finalState = await pollForStatus(order, pfiDid, privateKeyJwk, kid)

@@ -20,7 +20,6 @@ class _ExchangeRepository implements ExchangesApi {
 
     const exchanges: MessageKindClass[][] = []
     for (let id of exchangeIds) {
-      console.log('calling id', id)
       // TODO: handle error property
       try {
         const exchange = await this.getExchange({ id })
@@ -44,7 +43,6 @@ class _ExchangeRepository implements ExchangesApi {
   }
 
   async getExchange(opts: { id: string }): Promise<MessageKindClass[]> {
-    console.log('getting exchange for id', opts.id)
     const results = await Postgres.client.selectFrom('exchange')
       .select(['message'])
       .where(eb => eb.and({
@@ -75,7 +73,6 @@ class _ExchangeRepository implements ExchangesApi {
   }
 
   async getRfq(opts: { exchangeId: string }): Promise<Rfq> {
-    console.log('getting rfq for id', opts.exchangeId)
     return await this.getMessage({ exchangeId: opts.exchangeId, messageKind: 'rfq' }) as Rfq
   }
 
@@ -111,8 +108,6 @@ class _ExchangeRepository implements ExchangesApi {
   }
 
   async getMessage(opts: { exchangeId: string, messageKind: MessageKind }) {
-    console.log("getting message", opts.exchangeId, opts.messageKind)
-    console.log("Postgres client", Postgres.client)
     const result = await Postgres.client.selectFrom('exchange')
       .select(['message'])
       .where(eb => eb.and({
@@ -128,7 +123,6 @@ class _ExchangeRepository implements ExchangesApi {
   }
 
   async addMessage(opts: { message: MessageKindClass }) {
-    console.log("adding message", opts.message)
     const { message } = opts
     const subject = aliceMessageKinds.has(message.kind) ? message.from : message.to
 
@@ -142,32 +136,7 @@ class _ExchangeRepository implements ExchangesApi {
       })
       .execute()
 
-    console.log(`Add ${message.kind} Result: ${JSON.stringify(result, null, 2)}`)
-
-    if (message.kind == 'rfq') {
-      const quote = Quote.create(
-        {
-          metadata: {
-            from: config.did.id,
-            to: message.from,
-            exchangeId: message.exchangeId
-          },
-          data: {
-            expiresAt: new Date(2024, 4, 1).toISOString(),
-            payin: {
-              currencyCode: 'BTC',
-              amountSubunits: '1000'
-            },
-            payout: {
-              currencyCode: 'KES',
-              amountSubunits: '123456789'
-            }
-          }
-        }
-      )
-      await quote.sign(config.did.privateKey, config.did.kid)
-      this.addMessage({ message: quote as Quote})
-    }
+    //console.log(`Add ${message.kind} Result: ${JSON.stringify(result, null, 2)}`)
 
     if (message.kind == 'order') {
       const orderStatus = OrderStatus.create(
