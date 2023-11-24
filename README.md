@@ -9,7 +9,7 @@ In the `do-remittance.ts` example client it creates a token for the card, so tbd
 
 ![image](https://github.com/tbdeng/pinpayments-pfi/assets/14976/ea2b87a1-e25d-4c6f-b3ea-65c93c1d499e)
 
-NOTE: this is not using market rates, or anything sensible, and is for illustrative purposes only. 
+NOTE: this is not using market rates, or anything sensible, and is for illustrative purposes only, not production use.  
 
 # Development Prerequisites
 ## `node` and `npm`
