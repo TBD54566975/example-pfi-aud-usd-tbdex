@@ -48,7 +48,7 @@ jobs:
         ./db/scripts/migrate
     - name: Run server and tests
       run: |
-        npm run server &
+        npm run clean && npm run compile && node --enable-source-maps dist/main.js &
         SERVER_PID=$!   
         sleep 5     
         npm run test
