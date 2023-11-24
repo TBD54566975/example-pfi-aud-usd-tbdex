@@ -116,12 +116,12 @@ for (const message of exchange) {
   if (message instanceof Quote) {
     
     const quote = message as Quote
-    console.log('we have a quote!', quote)
-
-    // Place an order against that quote:
+    console.log('we have a quote returned')
+    // we are very trusting so lets just go and place an order against that quote:
     const order = Order.create({
       metadata: { from: alice.did, to: pfiDid, exchangeId: quote.exchangeId },
     })
+    
     await order.sign(privateKeyJwk, kid)
     const orderResponse = await TbdexHttpClient.sendMessage({ message: order })
     console.log('orderResponse',  JSON.stringify(orderResponse, null, 2))

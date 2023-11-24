@@ -1,8 +1,7 @@
-import { Close, MessageKind, MessageKindClass, Order, OrderStatus, Quote, ExchangesApi, Rfq, GetExchangesFilter, MessageModel } from '@tbdex/http-server'
+import type { Close, MessageKind, MessageKindClass, Order, OrderStatus, Quote, ExchangesApi, Rfq, GetExchangesFilter, MessageModel } from '@tbdex/http-server'
 import { Message } from '@tbdex/http-server'
 
 import { Postgres } from './postgres.js'
-import { config } from '../config.js'
 
 await Postgres.connect()
 // await Postgres.ping()
@@ -10,66 +9,70 @@ await Postgres.clear()
 
 
 class _ExchangeRepository implements ExchangesApi {
-  async getExchanges(opts: { filter: GetExchangesFilter }): Promise<MessageKindClass[][]> {
+  getExchanges(opts: { filter: GetExchangesFilter }): Promise<MessageKindClass[][]> {
     // TODO: try out GROUP BY! would do it now, just unsure what the return structure looks like
-    const exchangeIds = opts.filter.id?.length ? opts.filter.id : []
+    const promises: Promise<MessageKindClass[]>[] = []
+    const exchangeIds = []
+
+    if (opts.filter && Array.isArray(opts.filter.id)) {
+      exchangeIds.push(...opts.filter.id)
+    }
 
     if (exchangeIds.length == 0) {
       return this.getAllExchanges()
     }
 
-    const exchanges: MessageKindClass[][] = []
     for (let id of exchangeIds) {
+      console.log('calling id', id)
       // TODO: handle error property
-      try {
-        const exchange = await this.getExchange({ id })
-        if (exchange.length) exchanges.push(exchange)
-        else console.error(`Could not find exchange with exchangeId ${id}`)
-      } catch (err) {
-        console.error(err)
-      }
+      const promise = this.getExchange({ id }).catch(_e => [])
+      promises.push(promise)
     }
 
-    return exchanges
+    return Promise.all(promises)
   }
 
   async getAllExchanges(): Promise<MessageKindClass[][]> {
+
     const results = await Postgres.client.selectFrom('exchange')
-      .select(['message'])
+      .select(['message', 'exchangeid'])
       .orderBy('createdat', 'asc')
       .execute()
 
-    return this.composeMessages(results)
+    const exchanges = this.groupMessagesByExchangeId(results)
+
+    return Object.values(exchanges)
   }
 
   async getExchange(opts: { id: string }): Promise<MessageKindClass[]> {
+    console.log('getting exchange for id', opts.id)
     const results = await Postgres.client.selectFrom('exchange')
-      .select(['message'])
+      .select(['message', 'exchangeid'])
       .where(eb => eb.and({
         exchangeid: opts.id,
       }))
       .orderBy('createdat', 'asc')
       .execute()
 
-    const messages = this.composeMessages(results)
+    const messages = this.groupMessagesByExchangeId(results)
 
-    return messages[0] ?? []
+    return Object.values(messages)[0]
   }
 
-  private composeMessages(results: { message: MessageModel<MessageKind> }[]): MessageKindClass[][] {
-    const exchangeIdsToMessages: {[key: string]: MessageKindClass[]} = {}
+  private groupMessagesByExchangeId(results: { message: MessageModel<MessageKind>, exchangeid: string }[]): Record<string, MessageKindClass[]> {
+    const exchangeIdToMessages = {}
 
     for (let result of results) {
       const message = Message.fromJson(result.message)
-      const exchangeId = message.exchangeId
-      if (exchangeIdsToMessages[exchangeId]) {
-        exchangeIdsToMessages[exchangeId].push(message)
-      } else {
-        exchangeIdsToMessages[exchangeId] = [message]
+
+      if (!exchangeIdToMessages[result.exchangeid]) {
+        exchangeIdToMessages[result.exchangeid] = []
       }
+
+      exchangeIdToMessages[result.exchangeid].push(message)
     }
 
-    return Object.values(exchangeIdsToMessages)
+    return exchangeIdToMessages
   }
 
   async getRfq(opts: { exchangeId: string }): Promise<Rfq> {
@@ -136,24 +139,7 @@ class _ExchangeRepository implements ExchangesApi {
       })
       .execute()
 
-    //console.log(`Add ${message.kind} Result: ${JSON.stringify(result, null, 2)}`)
-
-    if (message.kind == 'order') {
-      const orderStatus = OrderStatus.create(
-        {
-          metadata: {
-            from: config.did.id,
-            to: message.from,
-            exchangeId: message.exchangeId
-          },
-          data: {
-            orderStatus: 'COMPLETED'
-          }
-        }
-      )
-      await orderStatus.sign(config.did.privateKey, config.did.kid)
-      this.addMessage({ message: orderStatus as OrderStatus})
-    }
+    console.log(`Add ${message.kind} Message Result: ${JSON.stringify(result, null, 2)}`)
   }
 }
 

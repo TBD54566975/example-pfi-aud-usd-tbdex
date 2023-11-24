@@ -40,41 +40,43 @@ process.on('SIGTERM', async () => {
 
 const httpApi = new TbdexHttpServer({ exchangesApi: ExchangeRespository, offeringsApi: OfferingRepository })
 
-httpApi.submit('rfq', async (ctx, rfq) => {
-  await ExchangeRespository.addMessage({ message: rfq as Rfq })
+httpApi.submit('rfq', async (ctx, rfq: Rfq) => {
+  await ExchangeRespository.addMessage({ message: rfq })
 
-  const quote = Quote.create(
-    {
-      metadata: {
-        from: config.did.id,
-        to: rfq.from,
-        exchangeId: rfq.exchangeId
-      },
-      data: {
-        expiresAt: new Date(2024, 4, 1).toISOString(),
-        paymentInstructions : {
-          payin : {
-            link: "usdc://pay?address=0x1234567890",
-            instruction: "send funds to the supplied address"            
+  const offering = await OfferingRepository.getOffering({ id: rfq.offeringId })
+
+
+  if (rfq.payinMethod.kind == 'CREDIT_CARD_TOKEN' && offering.payinCurrency.currencyCode == 'USD' && offering.payoutCurrency.currencyCode == 'AUD' ) {
+    const quote = Quote.create(
+      {
+        metadata: {
+          from: config.did.id,
+          to: rfq.from,
+          exchangeId: rfq.exchangeId
+        },
+        data: {
+          expiresAt: new Date(2024, 4, 1).toISOString(),
+          payin: {
+            currencyCode: 'USDC',
+            amountSubunits: '100',
+          },
+          payout: {
+            currencyCode: 'AUD',
+            amountSubunits: '110'
           }
-        },
-        payin: {
-          currencyCode: 'USDC',
-          amountSubunits: '100',
-        },
-        payout: {
-          currencyCode: 'AUD',
-          amountSubunits: '110'
         }
       }
-    }
-  )
-  await quote.sign(config.did.privateKey, config.did.kid)
-  await ExchangeRespository.addMessage({ message: quote as Quote})  
+    )
+    await quote.sign(config.did.privateKey, config.did.kid)
+    await ExchangeRespository.addMessage({ message: quote as Quote})  
+
+  }
 })
 
-httpApi.submit('order', async (ctx, order) => {
-  await ExchangeRespository.addMessage({ message: order as Order })
+httpApi.submit('order', async (ctx, order: Order) => {
+  await ExchangeRespository.addMessage({ message: order })
+  
+
 })
 
 httpApi.submit('close', async (ctx, close) => {
