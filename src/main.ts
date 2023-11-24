@@ -1,8 +1,8 @@
 import './polyfills.js'
 import {OfferingRepository} from './offerings.js'
 
-import type { Rfq, Order, Close } from '@tbdex/http-server'
-import { Quote } from "@tbdex/http-server"
+import type { Rfq, Order, Close, Message } from '@tbdex/http-server'
+import { Quote, OrderStatus } from "@tbdex/http-server"
 
 import log from './logger.js'
 import { config } from './config.js'
@@ -75,7 +75,41 @@ httpApi.submit('rfq', async (ctx, rfq: Rfq) => {
 
 httpApi.submit('order', async (ctx, order: Order) => {
   await ExchangeRespository.addMessage({ message: order })
-  
+
+  // first we will charge the card
+  // then we will send the money to the bank account
+
+  const quote = await ExchangeRespository.getQuote({ exchangeId: order.exchangeId })
+  const rfq = await ExchangeRespository.getRfq({ exchangeId: order.exchangeId })
+
+  const response = await fetch('https://test-api.pinpayments.com/1/charges', {
+    method: 'POST',
+    headers: {
+        'Authorization': 'Basic ' + Buffer.from('pTzmhz6VMu7D4XMzqtM0NQ:').toString('base64'),
+        'Content-Type': 'application/x-www-form-urlencoded',
+    },
+    body: new URLSearchParams({
+        'amount': quote.data.payin.amountSubunits,
+        'currency': 'USD',
+        'description': 'For remittances',
+        'ip_address': '203.192.1.172',
+        'email': 'test@testing.com',
+        'card_token': rfq.data.payinMethod.paymentDetails['pinPaymentsToken'],
+        'metadata[OrderNumber]': '123456',
+        'metadata[CustomerName]': 'Roland Robot'
+    })
+  });
+
+  const data = await response.json();
+
+  await updateOrderStatus(rfq.exchangeId, rfq.from, 'IN_PROGRESS')
+
+  if (data.response && data.response.success) {
+      console.log('Charge created successfully. Token:', data.response.token)
+  } else {
+      console.error('Failed to create charge. Error:', data.response.error_message)
+  }  
+
 
 })
 
@@ -104,4 +138,21 @@ function gracefulShutdown() {
 
     process.exit(0)
   })
+}
+
+async function updateOrderStatus(exchangeId:string, to:string, status: string) {
+  const orderStatus = OrderStatus.create(
+    {
+      metadata: {
+        from: config.did.id,
+        to: to,
+        exchangeId: exchangeId
+      },
+      data: {
+        orderStatus: status
+      }
+    }
+  )
+  await orderStatus.sign(config.did.privateKey, config.did.kid)
+  ExchangeRespository.addMessage({ message: orderStatus as OrderStatus})
 }

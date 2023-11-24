@@ -127,8 +127,7 @@ for (const message of exchange) {
     console.log('orderResponse',  JSON.stringify(orderResponse, null, 2))
 
     // finally we poll for response.
-    const finalState = await pollForStatus(order, pfiDid, privateKeyJwk, kid)
-    console.log('Final status:', finalState)
+    await pollForStatus(order, pfiDid, privateKeyJwk, kid)    
   }
 }
 
@@ -151,7 +150,7 @@ async function pollForStatus(order, pfiDid, privateKeyJwk, kid) {
       if (message instanceof OrderStatus) {
         console.log('we have an order status')
         const orderStatus = message as OrderStatus
-        console.log('orderStatus', orderStatus)
+        console.log('orderStatus', orderStatus.data.orderStatus)
         return orderStatus
       }
     }
