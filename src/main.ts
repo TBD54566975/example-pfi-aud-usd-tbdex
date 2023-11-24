@@ -1,8 +1,8 @@
 import './polyfills.js'
 import {OfferingRepository} from './offerings.js'
 
-import type { Rfq, Order, Close, Message } from '@tbdex/http-server'
-import { Quote, OrderStatus } from "@tbdex/http-server"
+import type { Rfq, Order, Message } from '@tbdex/http-server'
+import { Quote, OrderStatus, Close } from "@tbdex/http-server"
 
 import log from './logger.js'
 import { config } from './config.js'
@@ -82,10 +82,11 @@ httpApi.submit('order', async (ctx, order: Order) => {
   const quote = await ExchangeRespository.getQuote({ exchangeId: order.exchangeId })
   const rfq = await ExchangeRespository.getRfq({ exchangeId: order.exchangeId })
 
-  const response = await fetch('https://test-api.pinpayments.com/1/charges', {
+  let response = await fetch('https://test-api.pinpayments.com/1/charges', {
     method: 'POST',
     headers: {
-        'Authorization': 'Basic ' + Buffer.from('pTzmhz6VMu7D4XMzqtM0NQ:').toString('base64'),
+
+        'Authorization': 'Basic ' + Buffer.from(config.pinPaymentsKey+':').toString('base64'),
         'Content-Type': 'application/x-www-form-urlencoded',
     },
     body: new URLSearchParams({
@@ -100,15 +101,84 @@ httpApi.submit('order', async (ctx, order: Order) => {
     })
   });
 
-  const data = await response.json();
-
+  let data = await response.json();
   await updateOrderStatus(rfq.exchangeId, rfq.from, 'IN_PROGRESS')
+
+
 
   if (data.response && data.response.success) {
       console.log('Charge created successfully. Token:', data.response.token)
   } else {
       console.error('Failed to create charge. Error:', data.response.error_message)
+      await close(rfq.exchangeId, rfq.from, 'Failed to create charge.')
+      return
   }  
+
+
+  // now transfer the the money to the bank account as AUD
+  // first create a reipient and get the recipient token
+  response = await fetch('https://test-api.pinpayments.com/1/recipients', {
+    method: 'POST',
+    headers: {
+        'Authorization': 'Basic ' + Buffer.from(config.pinPaymentsKey + ':').toString('base64'),
+        'Content-Type': 'application/x-www-form-urlencoded',
+    },
+    body: new URLSearchParams({
+        'email': 'roland@pinpayments.com',
+        'name': 'Mr Roland Robot',
+        'bank_account[name]': rfq.data.payoutMethod.paymentDetails['accountName'],
+        'bank_account[bsb]':  rfq.data.payoutMethod.paymentDetails['bsbNumber'],
+        'bank_account[number]': rfq.data.payoutMethod.paymentDetails['accountNumber'],
+    })
+  });
+
+
+  data = await response.json()
+
+  if (data.response && data.response.token) {
+    console.log('Recipient created successfully. Token:', data.response.token)
+  } else {
+    console.log("Unable to create recipient")
+    console.log(data)
+    await close(rfq.exchangeId, rfq.from, 'Failed to create recipient.')
+    return
+  }
+
+  const recipientToken = data.response.token
+  console.log('recipient token:', recipientToken)
+
+
+  await updateOrderStatus(rfq.exchangeId, rfq.from, 'TRANSFERING_FUNDS')
+
+
+  response = await fetch('https://test-api.pinpayments.com/1/transfers', {
+    method: 'POST',
+    headers: {
+        'Authorization': 'Basic ' + Buffer.from(config.pinPaymentsKey + ':').toString('base64'),
+        'Content-Type': 'application/x-www-form-urlencoded',
+    },
+    body: new URLSearchParams({
+        'amount': quote.data.payout.amountSubunits,
+        'currency': quote.data.payout.currencyCode,
+        'description': 'For remittances',
+        'recipient': recipientToken
+    })
+  });
+
+  data = await response.json();  
+
+  if (data.response && data.response.status == 'succeeded') {
+      console.log("------>Transfer succeeded!!")      
+      await updateOrderStatus(rfq.exchangeId, rfq.from, 'SUCCESS')
+      await close(rfq.exchangeId, rfq.from, 'SUCCESS')
+      
+  } else {
+      await updateOrderStatus(rfq.exchangeId, rfq.from, 'FAILED')
+      await close(rfq.exchangeId, rfq.from, 'Failed to create transfer.')
+  }      
+
+  console.log('all DONE')
+
 
 
 })
@@ -140,7 +210,8 @@ function gracefulShutdown() {
   })
 }
 
-async function updateOrderStatus(exchangeId:string, to:string, status: string) {
+async function updateOrderStatus(exchangeId:string, to:string,  status: string) {
+  console.log("----------->>>>>>>>>                         -------->Updating status", status)
   const orderStatus = OrderStatus.create(
     {
       metadata: {
@@ -154,5 +225,24 @@ async function updateOrderStatus(exchangeId:string, to:string, status: string) {
     }
   )
   await orderStatus.sign(config.did.privateKey, config.did.kid)
-  ExchangeRespository.addMessage({ message: orderStatus as OrderStatus})
+  await ExchangeRespository.addMessage({ message: orderStatus as OrderStatus})
+}
+
+async function close(exchangeId: string, to: string, reason: string) {
+  console.log("closing exchange ", reason)
+  
+  const close = Close.create(
+    {
+      metadata: {
+        from: config.did.id,
+        to: to,
+        exchangeId: exchangeId
+      },
+      data: {
+        reason: reason
+      }
+    }
+  )
+  await close.sign(config.did.privateKey, config.did.kid)
+  await ExchangeRespository.addMessage({ message: close})
 }

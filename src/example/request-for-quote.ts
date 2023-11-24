@@ -78,9 +78,9 @@ const rfq = Rfq.create({
     payoutMethod: {
       kind: 'AUSTRALIAN_BANK_ACCOUNT',
       paymentDetails: {
-        accountNumber: 'your_account_number', // replace with actual account number
-        bsbNumber: 'your_bsb_number', // replace with actual BSB number
-        accountName: 'your_account_name' // replace with actual account name
+        accountNumber: '987654321', // replace with actual account number
+        bsbNumber: '123456', // replace with actual BSB number
+        accountName: 'Mr Roland Robot' // replace with actual account name
       }
     },
     claims: [signedCredential]
@@ -124,8 +124,10 @@ for (const message of exchange) {
     
     await order.sign(privateKeyJwk, kid)
     const orderResponse = await TbdexHttpClient.sendMessage({ message: order })
+    console.log('we have an order response')
     console.log('orderResponse',  JSON.stringify(orderResponse, null, 2))
 
+    
     // finally we poll for response.
     await pollForStatus(order, pfiDid, privateKeyJwk, kid)    
   }
@@ -147,6 +149,7 @@ async function pollForStatus(order, pfiDid, privateKeyJwk, kid) {
     const [ exchange ] = exchanges.data
 
     for (const message of exchange) {
+      console.log("message", message)
       if (message instanceof OrderStatus) {
         console.log('we have an order status')
         const orderStatus = message as OrderStatus

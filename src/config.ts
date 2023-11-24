@@ -21,7 +21,8 @@ export type Config = {
     privateKey: PrivateKeyJwk
     kid: string
   }
-  allowlist: string[]
+  allowlist: string[],
+  pinPaymentsKey: string,
 }
 
 export const config: Config = {
@@ -41,6 +42,7 @@ export const config: Config = {
     privateKey : JSON.parse(process.env['SEC_DID_PRIVATE_KEY'] || null),
     kid   : process.env['SEC_DID_KID']
   },
+  pinPaymentsKey: process.env['SEC_PIN_PAYMENTS_SECRET_KEY'],
   allowlist: JSON.parse(process.env['SEC_ALLOWLISTED_DIDS'] || '[]')
 }
 
