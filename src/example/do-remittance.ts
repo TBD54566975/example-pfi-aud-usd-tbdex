@@ -1,4 +1,4 @@
-import { TbdexHttpClient, Rfq, Quote, Order, OrderStatus } from '@tbdex/http-client'
+import { TbdexHttpClient, Rfq, Quote, Order, OrderStatus, Close } from '@tbdex/http-client'
 import { createOrLoadDid } from './utils.js'
 import fs from 'fs/promises'
 
@@ -34,7 +34,7 @@ const kid = alice.document.verificationMethod[0].id
 //
 
 //
-// to satisfy the offering we will need a credit card token: 
+// to satisfy the offering we will need a credit card token:
 // Create a payment token so we don't have to pass the credit card to tbdex or store it.
 //
 const response = await fetch('https://test-api.pinpayments.com/1/cards', {
@@ -85,12 +85,12 @@ const rfq = Rfq.create({
     },
     claims: [signedCredential]
   }
-});
+})
 
 
 await rfq.sign(privateKeyJwk, kid)
 
-console.log("rfq id:", rfq.id)
+console.log('rfq id:', rfq.id)
 
 const resp = await TbdexHttpClient.sendMessage({ message: rfq })
 // asser that the response is a success
@@ -114,22 +114,22 @@ const exchanges = await TbdexHttpClient.getExchanges({
 const [ exchange ] = exchanges.data
 for (const message of exchange) {
   if (message instanceof Quote) {
-    
+
     const quote = message as Quote
     console.log('we have a quote returned')
     // we are very trusting so lets just go and place an order against that quote:
     const order = Order.create({
       metadata: { from: alice.did, to: pfiDid, exchangeId: quote.exchangeId },
     })
-    
+
     await order.sign(privateKeyJwk, kid)
     const orderResponse = await TbdexHttpClient.sendMessage({ message: order })
     console.log('we have an order response')
     console.log('orderResponse',  JSON.stringify(orderResponse, null, 2))
 
-    
+
     // finally we poll for response.
-    await pollForStatus(order, pfiDid, privateKeyJwk, kid)    
+    await pollForStatus(order, pfiDid, privateKeyJwk, kid)
   }
 }
 
@@ -149,12 +149,14 @@ async function pollForStatus(order, pfiDid, privateKeyJwk, kid) {
     const [ exchange ] = exchanges.data
 
     for (const message of exchange) {
-      console.log("message", message)
       if (message instanceof OrderStatus) {
-        console.log('we have an order status')
         const orderStatus = message as OrderStatus
         console.log('orderStatus', orderStatus.data.orderStatus)
-        return orderStatus
+      }
+      if (message instanceof Close) {
+        const close = message as Close
+        console.log('close', close.data.reason)
+        return
       }
     }
   }

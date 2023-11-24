@@ -102,7 +102,7 @@ httpApi.submit('order', async (ctx, order: Order) => {
   });
 
   let data = await response.json();
-  await updateOrderStatus(rfq.exchangeId, rfq.from, 'IN_PROGRESS')
+  await updateOrderStatus(rfq, 'IN_PROGRESS')
 
 
 
@@ -110,7 +110,7 @@ httpApi.submit('order', async (ctx, order: Order) => {
       console.log('Charge created successfully. Token:', data.response.token)
   } else {
       console.error('Failed to create charge. Error:', data.response.error_message)
-      await close(rfq.exchangeId, rfq.from, 'Failed to create charge.')
+      await close(rfq, 'Failed to create charge.')
       return
   }  
 
@@ -140,7 +140,7 @@ httpApi.submit('order', async (ctx, order: Order) => {
   } else {
     console.log("Unable to create recipient")
     console.log(data)
-    await close(rfq.exchangeId, rfq.from, 'Failed to create recipient.')
+    await close(rfq, 'Failed to create recipient.')
     return
   }
 
@@ -148,7 +148,7 @@ httpApi.submit('order', async (ctx, order: Order) => {
   console.log('recipient token:', recipientToken)
 
 
-  await updateOrderStatus(rfq.exchangeId, rfq.from, 'TRANSFERING_FUNDS')
+  await updateOrderStatus(rfq, 'TRANSFERING_FUNDS')
 
 
   response = await fetch('https://test-api.pinpayments.com/1/transfers', {
@@ -169,12 +169,12 @@ httpApi.submit('order', async (ctx, order: Order) => {
 
   if (data.response && data.response.status == 'succeeded') {
       console.log("------>Transfer succeeded!!")      
-      await updateOrderStatus(rfq.exchangeId, rfq.from, 'SUCCESS')
-      await close(rfq.exchangeId, rfq.from, 'SUCCESS')
+      await updateOrderStatus(rfq, 'SUCCESS')
+      await close(rfq, 'SUCCESS')
       
   } else {
-      await updateOrderStatus(rfq.exchangeId, rfq.from, 'FAILED')
-      await close(rfq.exchangeId, rfq.from, 'Failed to create transfer.')
+      await updateOrderStatus(rfq, 'FAILED')
+      await close(rfq, 'Failed to create transfer.')
   }      
 
   console.log('all DONE')
@@ -210,14 +210,14 @@ function gracefulShutdown() {
   })
 }
 
-async function updateOrderStatus(exchangeId:string, to:string,  status: string) {
+async function updateOrderStatus(rfq: Rfq, status: string) {
   console.log("----------->>>>>>>>>                         -------->Updating status", status)
   const orderStatus = OrderStatus.create(
     {
       metadata: {
         from: config.did.id,
-        to: to,
-        exchangeId: exchangeId
+        to: rfq.from,
+        exchangeId: rfq.exchangeId
       },
       data: {
         orderStatus: status
@@ -228,15 +228,15 @@ async function updateOrderStatus(exchangeId:string, to:string,  status: string) 
   await ExchangeRespository.addMessage({ message: orderStatus as OrderStatus})
 }
 
-async function close(exchangeId: string, to: string, reason: string) {
+async function close(rfq: Rfq, reason: string) {
   console.log("closing exchange ", reason)
   
   const close = Close.create(
     {
       metadata: {
         from: config.did.id,
-        to: to,
-        exchangeId: exchangeId
+        to: rfq.from,
+        exchangeId: rfq.exchangeId
       },
       data: {
         reason: reason

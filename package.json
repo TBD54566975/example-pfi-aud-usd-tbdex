@@ -51,11 +51,10 @@
     "lint:fix": "eslint . --ext .ts --fix",
     "server": "npm run clean && npm run compile && node --enable-source-maps dist/main.js",
     "test": "rimraf dist/tests && npm run compile && node --test",
-    "seed-offerings": "npm run clean && npm run compile && node dist/seed-offerings.js",
     "try": "npm run clean && npm run compile && node --enable-source-maps dist/client-test.js",
     "example-create-issuer": "npm run clean && npm run compile && node --enable-source-maps dist/example/create-issuer.js",
     "example-create-customer": "npm run clean && npm run compile && node --enable-source-maps dist/example/create-customer.js",
     "example-issue-credential": "npm run clean && npm run compile && node --enable-source-maps dist/example/issue-credential.js",
-    "example-rfq": "npm run clean && npm run compile && node --enable-source-maps dist/example/request-for-quote.js"
+    "example-remittance": "npm run clean && npm run compile && node --enable-source-maps dist/example/do-remittance.js"
   }
 }
