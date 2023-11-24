@@ -3,10 +3,13 @@
 This is an example USD to AUD remittance PFI implementation using the tbdex protocol.
 It offers up exchange from USD to AUD and remitts the funds via an Australian Bank Account transfer.
 
-USD can be provided via card, and USDC (FUTURE) 
+USD can be provided via credit card, and USDC (FUTURE) 
 
-In the `do-remittance.ts` example client it creates a token for the card, so tbdex never sees the card information.
+In the `do-remittance.ts` example client it creates a token for the card, so tbdex never sees the card information. 
 
+![image](https://github.com/tbdeng/pinpayments-pfi/assets/14976/ea2b87a1-e25d-4c6f-b3ea-65c93c1d499e)
+
+NOTE: this is not using market rates, or anything sensible, and is for illustrative purposes only. 
 
 # Development Prerequisites
 ## `node` and `npm`
