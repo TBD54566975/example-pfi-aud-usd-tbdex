@@ -2,7 +2,7 @@ import './polyfills.js'
 import {OfferingRepository} from './offerings.js'
 
 import type { Rfq, Order, Message } from '@tbdex/http-server'
-import { Quote, OrderStatus, Close } from "@tbdex/http-server"
+import { Quote, OrderStatus, Close } from '@tbdex/http-server'
 
 import log from './logger.js'
 import { config } from './config.js'
@@ -68,7 +68,7 @@ httpApi.submit('rfq', async (ctx, rfq: Rfq) => {
       }
     )
     await quote.sign(config.did.privateKey, config.did.kid)
-    await ExchangeRespository.addMessage({ message: quote as Quote})  
+    await ExchangeRespository.addMessage({ message: quote as Quote})
 
   }
 })
@@ -86,33 +86,33 @@ httpApi.submit('order', async (ctx, order: Order) => {
     method: 'POST',
     headers: {
 
-        'Authorization': 'Basic ' + Buffer.from(config.pinPaymentsKey+':').toString('base64'),
-        'Content-Type': 'application/x-www-form-urlencoded',
+      'Authorization': 'Basic ' + Buffer.from(config.pinPaymentsKey + ':').toString('base64'),
+      'Content-Type': 'application/x-www-form-urlencoded',
     },
     body: new URLSearchParams({
-        'amount': quote.data.payin.amountSubunits,
-        'currency': 'USD',
-        'description': 'For remittances',
-        'ip_address': '203.192.1.172',
-        'email': 'test@testing.com',
-        'card_token': rfq.data.payinMethod.paymentDetails['pinPaymentsToken'],
-        'metadata[OrderNumber]': '123456',
-        'metadata[CustomerName]': 'Roland Robot'
+      'amount': quote.data.payin.amountSubunits,
+      'currency': 'USD',
+      'description': 'For remittances',
+      'ip_address': '203.192.1.172',
+      'email': 'test@testing.com',
+      'card_token': rfq.data.payinMethod.paymentDetails['pinPaymentsToken'],
+      'metadata[OrderNumber]': '123456',
+      'metadata[CustomerName]': 'Roland Robot'
     })
-  });
+  })
 
-  let data = await response.json();
+  let data = await response.json()
   await updateOrderStatus(rfq, 'IN_PROGRESS')
 
 
 
   if (data.response && data.response.success) {
-      console.log('Charge created successfully. Token:', data.response.token)
+    console.log('Charge created successfully. Token:', data.response.token)
   } else {
-      console.error('Failed to create charge. Error:', data.response.error_message)
-      await close(rfq, 'Failed to create charge.')
-      return
-  }  
+    console.error('Failed to create charge. Error:', data.response.error_message)
+    await close(rfq, 'Failed to create charge.')
+    return
+  }
 
 
   // now transfer the the money to the bank account as AUD
@@ -120,17 +120,17 @@ httpApi.submit('order', async (ctx, order: Order) => {
   response = await fetch('https://test-api.pinpayments.com/1/recipients', {
     method: 'POST',
     headers: {
-        'Authorization': 'Basic ' + Buffer.from(config.pinPaymentsKey + ':').toString('base64'),
-        'Content-Type': 'application/x-www-form-urlencoded',
+      'Authorization': 'Basic ' + Buffer.from(config.pinPaymentsKey + ':').toString('base64'),
+      'Content-Type': 'application/x-www-form-urlencoded',
     },
     body: new URLSearchParams({
-        'email': 'roland@pinpayments.com',
-        'name': 'Mr Roland Robot',
-        'bank_account[name]': rfq.data.payoutMethod.paymentDetails['accountName'],
-        'bank_account[bsb]':  rfq.data.payoutMethod.paymentDetails['bsbNumber'],
-        'bank_account[number]': rfq.data.payoutMethod.paymentDetails['accountNumber'],
+      'email': 'roland@pinpayments.com',
+      'name': 'Mr Roland Robot',
+      'bank_account[name]': rfq.data.payoutMethod.paymentDetails['accountName'],
+      'bank_account[bsb]':  rfq.data.payoutMethod.paymentDetails['bsbNumber'],
+      'bank_account[number]': rfq.data.payoutMethod.paymentDetails['accountNumber'],
     })
-  });
+  })
 
 
   data = await response.json()
@@ -138,7 +138,7 @@ httpApi.submit('order', async (ctx, order: Order) => {
   if (data.response && data.response.token) {
     console.log('Recipient created successfully. Token:', data.response.token)
   } else {
-    console.log("Unable to create recipient")
+    console.log('Unable to create recipient')
     console.log(data)
     await close(rfq, 'Failed to create recipient.')
     return
@@ -154,28 +154,28 @@ httpApi.submit('order', async (ctx, order: Order) => {
   response = await fetch('https://test-api.pinpayments.com/1/transfers', {
     method: 'POST',
     headers: {
-        'Authorization': 'Basic ' + Buffer.from(config.pinPaymentsKey + ':').toString('base64'),
-        'Content-Type': 'application/x-www-form-urlencoded',
+      'Authorization': 'Basic ' + Buffer.from(config.pinPaymentsKey + ':').toString('base64'),
+      'Content-Type': 'application/x-www-form-urlencoded',
     },
     body: new URLSearchParams({
-        'amount': quote.data.payout.amountSubunits,
-        'currency': quote.data.payout.currencyCode,
-        'description': 'For remittances',
-        'recipient': recipientToken
+      'amount': quote.data.payout.amountSubunits,
+      'currency': quote.data.payout.currencyCode,
+      'description': 'For remittances',
+      'recipient': recipientToken
     })
-  });
+  })
 
-  data = await response.json();  
+  data = await response.json()
 
   if (data.response && data.response.status == 'succeeded') {
-      console.log("------>Transfer succeeded!!")      
-      await updateOrderStatus(rfq, 'SUCCESS')
-      await close(rfq, 'SUCCESS')
-      
+    console.log('------>Transfer succeeded!!')
+    await updateOrderStatus(rfq, 'SUCCESS')
+    await close(rfq, 'SUCCESS')
+
   } else {
-      await updateOrderStatus(rfq, 'FAILED')
-      await close(rfq, 'Failed to create transfer.')
-  }      
+    await updateOrderStatus(rfq, 'FAILED')
+    await close(rfq, 'Failed to create transfer.')
+  }
 
   console.log('all DONE')
 
@@ -211,7 +211,7 @@ function gracefulShutdown() {
 }
 
 async function updateOrderStatus(rfq: Rfq, status: string) {
-  console.log("----------->>>>>>>>>                         -------->Updating status", status)
+  console.log('----------->>>>>>>>>                         -------->Updating status', status)
   const orderStatus = OrderStatus.create(
     {
       metadata: {
@@ -229,8 +229,8 @@ async function updateOrderStatus(rfq: Rfq, status: string) {
 }
 
 async function close(rfq: Rfq, reason: string) {
-  console.log("closing exchange ", reason)
-  
+  console.log('closing exchange ', reason)
+
   const close = Close.create(
     {
       metadata: {
