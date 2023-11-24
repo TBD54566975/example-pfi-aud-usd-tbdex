@@ -33,6 +33,36 @@ const kid = alice.document.verificationMethod[0].id
 // And here we go with tbdex-protocol!
 //
 
+//
+// to satisfy the offering we will need a credit card token: 
+// Create a payment token so we don't have to pass the credit card to tbdex or store it.
+//
+const response = await fetch('https://test-api.pinpayments.com/1/cards', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/x-www-form-urlencoded',
+  },
+  body: new URLSearchParams({
+    'publishable_api_key': 'pk_G2SL5A0Ihy4f4STYxYLrcQ',
+    'number': '5520000000000000',
+    'expiry_month': '05',
+    'expiry_year': '2024',
+    'cvc': '123',
+    'name': 'Roland Robot',
+    'address_line1': '42 Sevenoaks St',
+    'address_line2': '',
+    'address_city': 'Lathlain',
+    'address_postcode': '6454',
+    'address_state': 'WA',
+    'address_country': 'Australia'
+  })
+})
+
+const token = (await response.json()).response.token
+console.log('payment token:', token)
+
+
+
 // First, Create an RFQ
 const rfq = Rfq.create({
   metadata: { from: alice.did, to: pfiDid },
@@ -40,8 +70,10 @@ const rfq = Rfq.create({
     offeringId: offering.id,
     payinSubunits: '100',
     payinMethod: {
-      kind: 'USDC_WALLET',
-      paymentDetails: {} // empty as per the new schema
+      kind: 'CREDIT_CARD_TOKEN',
+      paymentDetails: {
+        pinPaymentsToken: token
+      }
     },
     payoutMethod: {
       kind: 'AUSTRALIAN_BANK_ACCOUNT',

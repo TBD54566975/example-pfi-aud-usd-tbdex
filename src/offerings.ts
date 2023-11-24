@@ -10,8 +10,23 @@ const offering = Offering.create({
     payoutCurrency: { currencyCode: 'AUD' },
     payinCurrency: { currencyCode: 'USD' },
     payinMethods: [{
-      kind: 'USDC_WALLET',
-      requiredPaymentDetails: {}
+      kind: 'CREDIT_CARD_TOKEN',
+      requiredPaymentDetails: {
+        '$schema': 'http://json-schema.org/draft-07/schema#',
+        'title': 'Credit Card Pin payments token',
+        'type': 'object',
+        'required': [
+          'pinPaymentsToken',
+        ],
+        'additionalProperties': false,
+        'properties': {
+          'pinPaymentsToken': {
+            'title': 'Single use CC card token',
+            'description': 'https://pinpayments.com/ offers tokens so CC is not stored by tbdex',
+            'type': 'string'
+          },
+        }
+      }
     }],
     payoutMethods: [
       {
