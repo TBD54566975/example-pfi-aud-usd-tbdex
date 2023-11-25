@@ -3,13 +3,14 @@
 This is an example USD to AUD remittance PFI implementation using the tbdex protocol.
 It offers up exchange from USD to AUD and remitts the funds via an Australian Bank Account transfer.
 
-USD can be provided via credit card, and USDC (FUTURE) 
+USD can be provided via credit card, and USDC (TODO: FUTURE) 
 
-In the `do-remittance.ts` example client it creates a token for the card, so tbdex never sees the card information. 
-
-![image](https://github.com/tbdeng/pinpayments-pfi/assets/14976/ea2b87a1-e25d-4c6f-b3ea-65c93c1d499e)
+In the [do-remittance.ts](src/example/do-remittance.ts) example client it creates a token for the card, uses a verifiable credential and tbdex never sees the card information. 
 
 NOTE: this is not using market rates, or anything sensible, and is for illustrative purposes only, not production use.  
+
+<img width="984" alt="Screenshot 2023-11-25 at 8 48 29 am" src="https://github.com/TBD54566975/example-aud-usd-pfi/assets/14976/2f86b963-b63e-4f68-a277-a0b5882d7385">
+
 
 # Development Prerequisites
 ## `node` and `npm`
@@ -58,19 +59,19 @@ Run `npm run example-create-customer` to create a new "customer" DID (customer i
 
 Alice's private wallet info is stored in `alice.json`.
 
-## Step 5: Issue a sanctions check VC to "Alice"
+## Step 4: Issue a sanctions check VC to "Alice"
 
 Issue the credential to alice, which ensures Alice is a non-sanctioned individual.
 
 Run `npm run example-issue-credential`. This will save a `signed-credential.txt` file which contains the signed VC for convenience.
 
-## Step 6: Run the PFI server
+## Step 5: Run the PFI server
 
 Run the server (or restart it) in another terminal window: 
 
 `npm run server`
 
-## Step 7: Run the remittance flow
+## Step 6: Run the remittance flow
 
 `npm run example-remittance`
 
@@ -80,7 +81,7 @@ Each interaction happens in the context of an "Exchange" which is a record of th
 
 # Implementing a PFI
 
-The business logic for the PFI is mainly in main.ts and the offerings as specified in offerings.ts. Poke around!
+The business logic for the PFI is mainly in [main.ts](src/main.ts) and the offerings as specified in [offerings.ts](src/offerings.ts). Poke around!
 
 You also should use a non ephemeral DID (using the env vars config as described above), and store the keys in secure locations via a secrets manager.
 
