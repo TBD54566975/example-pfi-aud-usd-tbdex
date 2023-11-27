@@ -6,3 +6,7 @@ import { createOrLoadDid } from './utils.js'
 //
 const alice = await createOrLoadDid('alice.json')
 console.log('DID for alice:', alice.did)
+
+// write alices did to a file using fs
+import fs from 'fs/promises'
+await fs.writeFile('alice-did.txt', alice.did)

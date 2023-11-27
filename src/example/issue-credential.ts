@@ -3,9 +3,11 @@ import { createOrLoadDid } from './utils.js'
 import fs from 'node:fs'
 
 
-// get the did from the command line parameter
-const customerDid = process.argv[2]
 
+// load alice's did from a file caleld alice-did.txt
+const customerDid = fs.readFileSync('alice-did.txt', 'utf-8')
+
+// load issuer's did from a file called issuer-did.txt
 const issuer = await createOrLoadDid('issuer.json')
 
 //

@@ -57,7 +57,7 @@ Run `npm run example-create-issuer` to create a new VC issuer, which will be nee
 
 Run `npm run example-create-customer` to create a new "customer" DID (customer is called Alice, think of it as her wallet).
 
-Alice's private wallet info is stored in `alice.json`.
+Alice's private wallet info is stored in `alice.json`. Her public DID is stored in `alice-did.txt`.
 
 ## Step 4: Issue a sanctions check VC to "Alice"
 
