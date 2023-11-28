@@ -6,6 +6,9 @@ import { createOrLoadDid } from './utils.js'
 const issuer = await createOrLoadDid('issuer.json')
 console.log('\nIssuer did:', issuer.did)
 
+// wtite issuer did to file
+import fs from 'fs/promises'
+await fs.writeFile('issuer-did.txt', issuer.did)
 
 console.log(`
 Place the following in the seed-offerings.ts file as part of the constraint fields list:

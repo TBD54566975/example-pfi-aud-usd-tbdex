@@ -1,6 +1,9 @@
 import { OfferingsApi, Offering } from '@tbdex/http-server'
 import { config } from './config.js'
+import fs from 'fs/promises'
 
+// load issuer's did from a file called issuer-did.txt
+const issuer = await fs.readFile('issuer-did.txt', 'utf-8')
 
 const offering = Offering.create({
   metadata: { from: config.did.id },
@@ -79,7 +82,7 @@ const offering = Offering.create({
               path: ['$.issuer'],
               filter: {
                 type: 'string',
-                const: 'did:key:z6MkjjUeThBMoaBZn8xm48b8VZ4rnrZNQ9gM38X7TAkU3zRN'
+                const: issuer
               }
             }
           ]

@@ -51,5 +51,6 @@ jobs:
         npm run clean && npm run compile && node --enable-source-maps dist/main.js &
         SERVER_PID=$!   
         sleep 5     
+        npm run test
         npm run test-e2e
         kill $SERVER_PID
