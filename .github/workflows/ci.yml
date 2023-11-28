@@ -46,10 +46,15 @@ jobs:
     - name: Run migration scripts
       run: |
         ./db/scripts/migrate
-    - name: Run server and tests
+    - name: Prepare issuer and customer and issue credential
+      run: |
+        npm run example-create-issuer
+        npm run example-create-customer
+        npm run example-issue-credential
+    - name: Run PFI server and test
       run: |
         npm run clean && npm run compile && node --enable-source-maps dist/main.js &
         SERVER_PID=$!   
         sleep 5     
-        npm run test-e2e
+        npm run example-remittance
         kill $SERVER_PID
