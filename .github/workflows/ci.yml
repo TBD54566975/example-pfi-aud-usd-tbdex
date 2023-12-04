@@ -46,6 +46,8 @@ jobs:
     - name: Run migration scripts
       run: |
         ./db/scripts/migrate
+    - name: Payment sandbox account setup
+      run: echo "SEC_PIN_PAYMENTS_SECRET_KEY=${{ secrets.SEC_PIN_PAYMENTS_SECRET_KEY }}" > .env
     - name: Run PFI server and test
       run: |
         npm run example-create-issuer
