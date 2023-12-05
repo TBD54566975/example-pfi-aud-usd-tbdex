@@ -3,7 +3,7 @@
 This is an example USD to AUD remittance PFI implementation using the tbdex protocol.
 It offers up exchange from USD to AUD and remitts the funds via an Australian Bank Account transfer.
 
-USD can be provided via credit card, and USDC (TODO: FUTURE) 
+USD can be provided via credit card.
 
 In the [do-remittance.ts](src/example/do-remittance.ts) example client it creates a token for the card, uses a verifiable credential and tbdex never sees the card information. 
 
@@ -63,7 +63,7 @@ Alice's private wallet info is stored in `alice.json`. Her public DID is stored 
 
 Issue the credential to alice, which ensures Alice is a non-sanctioned individual.
 
-Run `npm run example-issue-credential`. This will save a `signed-credential.txt` file which contains the signed VC for convenience.
+Run `npm run example-issue-credential`. This will save a `signed-credential.txt` file which contains the signed VC for convenience. This does a very simple name check against an OFAC sanctions database.
 
 ## Step 5: Run the PFI server
 
