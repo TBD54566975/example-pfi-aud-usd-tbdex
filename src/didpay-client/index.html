@@ -1,0 +1,29 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-800 text-white">
+  <div class="flex justify-center items-center h-screen">
+    <form class="flex flex-col gap-4 p-8 bg-gray-700 shadow-xl rounded-lg" style="width: 300px;">
+      <label class="block">
+        Name:
+        <input type="text" name="name" class="mt-1 block w-full rounded-md border-gray-600 bg-gray-800 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-300" />
+      </label>
+      <label class="block">
+        Birthday:
+        <input type="date" name="birthday" class="mt-1 block w-full rounded-md border-gray-600 bg-gray-800 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-300" />
+      </label>
+      <label class="block">
+        Credit Card Number:
+        <input type="text" name="credit-card" class="mt-1 block w-full rounded-md border-gray-600 bg-gray-800 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-300" />
+      </label>
+      <button type="submit" class="py-2 px-4 bg-blue-500 hover:bg-blue-700 text-white font-bold rounded-md">
+        Submit
+      </button>
+    </form>
+  </div>
+</body>
+</html>
