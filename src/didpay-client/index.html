@@ -1,30 +1,102 @@
-<!doctype html>
-<html>
+<!DOCTYPE html>
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://unpkg.com/htmx.org"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment Form</title>
+    <link href="https://unpkg.com/tailwindcss@^1.0/dist/tailwind.min.css" rel="stylesheet">
 </head>
-<body class="bg-gray-800 text-white">
-  <div class="flex justify-center items-center h-screen">
-    <form class="flex flex-col gap-4 p-8 bg-gray-700 shadow-xl rounded-lg" style="width: 300px;">
-      <label class="block">
-        Name:
-        <input type="text" name="name" class="mt-1 block w-full rounded-md border-gray-600 bg-gray-800 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-300" />
-      </label>
-      <label class="block">
-        Birthday:
-        <input type="date" name="birthday" class="mt-1 block w-full rounded-md border-gray-600 bg-gray-800 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-300" />
-      </label>
-      <label class="block">
-        Credit Card Number:
-        <input type="text" name="credit-card" class="mt-1 block w-full rounded-md border-gray-600 bg-gray-800 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-300" />
-      </label>
-      <button type="submit" class="py-2 px-4 bg-blue-500 hover:bg-blue-700 text-white font-bold rounded-md">
-        Submit
-      </button>
-    </form>
-  </div>
+<body>
+    <div class="container mx-auto px-4">
+        <div class="w-full max-w-2xl mx-auto">
+            <form class="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4">
+                <!-- Credit Card Information Section -->
+                <fieldset class="mb-6">
+                    <legend class="text-xl font-bold mb-4">Credit Card Information</legend>
+                    <div class="mb-4">
+                        <label class="block text-gray-700 text-sm font-bold mb-2" for="number">Card Number</label>
+                        <input class="form-input" type="text" id="number" value="5520000000000000">
+                    </div>
+                    <div class="mb-4 grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-gray-700 text-sm font-bold mb-2" for="expiry_month">Expiry Month</label>
+                            <input class="form-input" type="text" id="expiry_month" value="05">
+                        </div>
+                        <div>
+                            <label class="block text-gray-700 text-sm font-bold mb-2" for="expiry_year">Expiry Year</label>
+                            <input class="form-input" type="text" id="expiry_year" value="2024">
+                        </div>
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-gray-700 text-sm font-bold mb-2" for="cvc">CVC</label>
+                        <input class="form-input" type="text" id="cvc" value="123">
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-gray-700 text-sm font-bold mb-2" for="name">Name on Card</label>
+                        <input class="form-input" type="text" id="name" value="Roland Robot">
+                    </div>
+                    <!-- Address Fields -->
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="mb-4 col-span-2">
+                            <label class="block text-gray-700 text-sm font-bold mb-2" for="address_line1">Address Line 1</label>
+                            <input class="form-input" type="text" id="address_line1" value="42 Sevenoaks St">
+                        </div>
+                        <div class="mb-4 col-span-2">
+                            <label class="block text-gray-700 text-sm font-bold mb-2" for="address_line2">Address Line 2</label>
+                            <input class="form-input" type="text" id="address_line2">
+                        </div>
+                        <div class="mb-4">
+                            <label class="block text-gray-700 text-sm font-bold mb-2" for="address_city">City</label>
+                            <input class="form-input" type="text" id="address_city" value="Lathlain">
+                        </div>
+                        <div class="mb-4">
+                            <label class="block text-gray-700 text-sm font-bold mb-2" for="address_postcode">Postcode</label>
+                            <input class="form-input" type="text" id="address_postcode" value="6454">
+                        </div>
+                        <div class="mb-4">
+                            <label class="block text-gray-700 text-sm font-bold mb-2" for="address_state">State</label>
+                            <input class="form-input" type="text" id="address_state" value="WA">
+                        </div>
+                        <div class="mb-4">
+                            <label class="block text-gray-700 text-sm font-bold mb-2" for="address_country">Country</label>
+                            <input class="form-input" type="text" id="address_country" value="Australia">
+                        </div>
+                    </div>
+                </fieldset>
+
+                <!-- Funds Recipient Section -->
+                <fieldset class="mb-6">
+                    <legend class="text-xl font-bold mb-4">Funds Recipient</legend>
+                    <div class="mb-4">
+                        <label class="block text-gray-700 text-sm font-bold mb-2" for="accountNumber">Account Number</label>
+                        <input class="form-input" type="text" id="accountNumber" value="987654321">
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-gray-700 text-sm font-bold mb-2" for="bsbNumber">BSB Number</label>
+                        <input class="form-input" type="text" id="bsbNumber" value="123456">
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-gray-700 text-sm font-bold mb-2" for="accountName">Account Name</label>
+                        <input class="form-input" type="text" id="accountName" value="Mr Roland Robot">
+                    </div>
+                </fieldset>
+
+                <!-- Amount to Transfer Section -->
+                <fieldset class="mb-6">
+                    <legend class="text-xl font-bold mb-4">Amount to Transfer</legend>
+                    <div class="mb-4">
+                        <label class="block text-gray-700 text-sm font-bold mb-2" for="transferAmount">Amount</label>
+                        <input class="form-input" type="number" id="transferAmount" placeholder="Enter amount">
+                    </div>
+                </fieldset>
+
+                <div class="flex items-center justify-between">
+                    <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline" type="submit">
+                        Submit
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
 </body>
 </html>
