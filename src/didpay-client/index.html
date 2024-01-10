@@ -8,21 +8,58 @@
 </head>
 <body>
 
-    <script type="module">
-      import {TbdexHttpClient} from 'https://cdn.jsdelivr.net/npm/@tbdex/http-client@0.22.1/dist/browser.mjs'      
-      console.log(TbdexHttpClient)
 
-      const { data } = await TbdexHttpClient.getOfferings({ pfiDid: "did:ion:EiCc6i4KnOXzjG1pn5dNU3T2ypQtVSFJ47J5_qKM5fDuyA:eyJkZWx0YSI6eyJwYXRjaGVzIjpbeyJhY3Rpb24iOiJyZXBsYWNlIiwiZG9jdW1lbnQiOnsicHVibGljS2V5cyI6W3siaWQiOiJkd24tc2lnIiwicHVibGljS2V5SndrIjp7ImNydiI6IkVkMjU1MTkiLCJrdHkiOiJPS1AiLCJ4IjoiamRacGdfSV93YWpUUU92MDJLV3cxU0Iwbm54ZjhoUWlnSFBIaXYzYXRUbyJ9LCJwdXJwb3NlcyI6WyJhdXRoZW50aWNhdGlvbiIsImFzc2VydGlvbk1ldGhvZCJdLCJ0eXBlIjoiSnNvbldlYktleTIwMjAifV0sInNlcnZpY2VzIjpbeyJpZCI6InBmaSIsInNlcnZpY2VFbmRwb2ludCI6Imh0dHA6Ly9sb2NhbGhvc3Q6OTAwMCIsInR5cGUiOiJQRkkifV19fV0sInVwZGF0ZUNvbW1pdG1lbnQiOiJFaUFtVUZCOFJ1djVQWnBGTzlQQkhNUi12bUloMl9GQWV4LXZnaG50OWVacUpBIn0sInN1ZmZpeERhdGEiOnsiZGVsdGFIYXNoIjoiRWlEWnZtQWQzNkFJTzJ0dVJJN0N6MFRZc2Y3Tk8weGNIVUZsN2Z5S1VUU3BRZyIsInJlY292ZXJ5Q29tbWl0bWVudCI6IkVpQnNveWRwellGNHdpS3JGVUtlWHZhUWtjQWxyTTJldG5rTDBtVkVSQnU5VVEifX0" })
-      const [ offering ] = data
-      console.log(offering)
+  <script type="module">
+    import {TbdexHttpClient} from 'https://cdn.jsdelivr.net/npm/@tbdex/http-client@0.22.1/dist/browser.mjs'
+    console.log(TbdexHttpClient)
 
-      // print json of offering
-      console.log(JSON.stringify(offering, null, 2))
+    async function loadOfferings() {
+      const { data } = await TbdexHttpClient.getOfferings({ pfiDid: "did:ion:EiCDEIDRwDI8NW2vyJaXx2xFquy3c7wk6YkSl__K-7MS2g:eyJkZWx0YSI6eyJwYXRjaGVzIjpbeyJhY3Rpb24iOiJyZXBsYWNlIiwiZG9jdW1lbnQiOnsicHVibGljS2V5cyI6W3siaWQiOiJkd24tc2lnIiwicHVibGljS2V5SndrIjp7ImNydiI6IkVkMjU1MTkiLCJrdHkiOiJPS1AiLCJ4IjoiVTU5Ry03dGE5bFU5NFMxVkhTMEg4TzBKMkpNcTBQamJPYUFTQzk0UjRZMCJ9LCJwdXJwb3NlcyI6WyJhdXRoZW50aWNhdGlvbiIsImFzc2VydGlvbk1ldGhvZCJdLCJ0eXBlIjoiSnNvbldlYktleTIwMjAifV0sInNlcnZpY2VzIjpbeyJpZCI6InBmaSIsInNlcnZpY2VFbmRwb2ludCI6Imh0dHA6Ly9sb2NhbGhvc3Q6OTAwMCIsInR5cGUiOiJQRkkifV19fV0sInVwZGF0ZUNvbW1pdG1lbnQiOiJFaURuNWFldUR0djRraURXYUh5d2gwVmZlb1BEQnJoZ2l3QVR0ZTUzMVFlYlV3In0sInN1ZmZpeERhdGEiOnsiZGVsdGFIYXNoIjoiRWlEVlpaUnpwa0IyQ0hGZkF6OFZjbTczOW90dS1LV3VGTkczUDE2Mnh1THZDQSIsInJlY292ZXJ5Q29tbWl0bWVudCI6IkVpQWtLN0wyQkF4NWhILVRPcXRURUdVRTY4ZFg5RVl5SXRlTUROR3NSdk5fSmcifX0" });
+      const offeringsContainer = document.getElementById('offeringsContainer');
+      
+      data.forEach(offering => {
+        const offeringElement = document.createElement('div');
+        offeringElement.className = 'bg-gray-100 p-4 rounded-md shadow-sm mb-5';
+        
+        const radio = document.createElement('input');
+        radio.type = 'radio';
+        radio.name = 'selectedOffering';
+        radio.value = offering.metadata.id;
+        offeringElement.appendChild(radio);
 
-    </script>
+        const flagImage = document.createElement('img');
+        flagImage.src = `https://flagcdn.com/w160/au.png`; // Update with correct path
+        flagImage.alt = 'Flag';
+        flagImage.style = 'width: 50px; height: 30px;';
+        offeringElement.appendChild(flagImage);
+
+        const description = document.createElement('p');
+        description.textContent = offering.data.description;
+        offeringElement.appendChild(description);
+
+        const payoutCurrency = document.createElement('p');
+        payoutCurrency.textContent = `Payout Currency: ${offering.data.payoutCurrency.currencyCode}`;
+        offeringElement.appendChild(payoutCurrency);
+
+        const payinMethods = document.createElement('p');
+        payinMethods.textContent = `Pay-in Methods: ${offering.data.payinMethods.map(m => m.kind).join(', ')}`;
+        offeringElement.appendChild(payinMethods);
+
+        offeringsContainer.appendChild(offeringElement);
+      });
+    }
+
+    window.addEventListener('load', loadOfferings);
+  </script>
+
     <div class="container mx-auto px-4 py-5">
         <div class="w-full max-w-2xl mx-auto">
             <form class="bg-white shadow-md rounded px-4 pt-4 pb-4 mb-4">
+
+              <!-- Offerings Section -->
+                <div id="offeringsContainer">
+                  <!-- Offerings will be loaded here -->
+              </div>              
                 <!-- Credit Card Information Section -->
                 <div class="bg-gray-100 p-4 rounded-md shadow-sm mb-5">
                     <fieldset>
