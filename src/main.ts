@@ -196,6 +196,12 @@ httpApi.api.get('/', (req, res) => {
   res.send('Please use the tbdex protocol to communicate with this server or a suitable library: https://github.com/TBD54566975/tbdex-protocol')
 })
 
+httpApi.api.get('/did', (req, res) => {
+  res.send(config.did.id)
+})
+
+
+
 const httpServerShutdownHandler = new HttpServerShutdownHandler(server)
 
 
