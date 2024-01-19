@@ -1,13 +1,14 @@
 import { DevTools } from '@tbdex/http-client'
-import fs from 'node:fs'
 import { createOrLoadDid } from './example/utils.js'
 
 
-// load alice's did from a file caleld alice-did.txt
-const customerDid = fs.readFileSync('alice-did.txt', 'utf-8')
 
 // load issuer's did from a file called issuer-did.txt
 const issuer = await createOrLoadDid('issuer.json')
+// wtite issuer did to file
+import fs from 'fs/promises'
+await fs.writeFile('issuer-did.txt', issuer.did)
+console.log('This did (stored in issuer-did.txt) will be trusted by the PFI.')
 
 //
 // At this point we can check if the user is sanctioned or not and decide to issue the credential.
@@ -70,7 +71,7 @@ function searchSanctions(queryData: QueryData, data: SanctionEntry[]): SanctionE
 }
 
 
-export async function requestCredential(name: string, country: string) {
+export async function requestCredential(name: string, country: string, customerDid: string) {
   const sanctionsSearch = searchSanctions({
     name: name,
     minScore: 80,

@@ -202,10 +202,7 @@ httpApi.api.get('/did', (req, res) => {
 })
 
 httpApi.api.get('/vc', async (req, res) => {
-  // get the name and country from query parameters
-  const name = req.query.name as string
-  const country = req.query.country as string
-  const credentials = await requestCredential(name, country)
+  const credentials = await requestCredential(req.query.name as string, req.query.country as string, req.query.did as string)
   res.send(credentials)
 })
 
