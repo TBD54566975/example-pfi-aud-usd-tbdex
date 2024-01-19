@@ -1,22 +1,15 @@
 import { DevTools } from '@tbdex/http-client'
 import { createOrLoadDid } from './example/utils.js'
-
+import fetch from 'node-fetch'
+import Papa from 'papaparse'
+import fuzzysort from 'fuzzysort'
 
 
 // load issuer's did from a file called issuer-did.txt
 const issuer = await createOrLoadDid('issuer.json')
-// wtite issuer did to file
+// wtite issuer did to file so server can trust it:
 import fs from 'fs/promises'
 await fs.writeFile('issuer-did.txt', issuer.did)
-console.log('This did (stored in issuer-did.txt) will be trusted by the PFI.')
-
-//
-// At this point we can check if the user is sanctioned or not and decide to issue the credential.
-// TOOD: implement the actual sanctions check!
-
-import fetch from 'node-fetch'
-import Papa from 'papaparse'
-import fuzzysort from 'fuzzysort'
 
 type SanctionEntry = {
   name: string;
@@ -70,7 +63,9 @@ function searchSanctions(queryData: QueryData, data: SanctionEntry[]): SanctionE
   return results
 }
 
-
+/*
+ * Check if the person is sanctioned and if not - issue them a VC signed by the issuer.
+ */
 export async function requestCredential(name: string, country: string, customerDid: string) {
   const sanctionsSearch = searchSanctions({
     name: name,
