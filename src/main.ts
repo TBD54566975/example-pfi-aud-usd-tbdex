@@ -9,6 +9,7 @@ import { config } from './config.js'
 import { Postgres, ExchangeRespository } from './db/index.js'
 import { HttpServerShutdownHandler } from './http-shutdown-handler.js'
 import { TbdexHttpServer } from '@tbdex/http-server'
+import { requestCredential } from './credential-issuer.js'
 
 
 console.log('PFI DID: ', config.did.id)
@@ -198,6 +199,14 @@ httpApi.api.get('/', (req, res) => {
 
 httpApi.api.get('/did', (req, res) => {
   res.send(config.did.id)
+})
+
+httpApi.api.get('/vc', async (req, res) => {
+  // get the name and country from query parameters
+  const name = req.query.name as string
+  const country = req.query.country as string
+  const credentials = await requestCredential(name, country)
+  res.send(credentials)
 })
 
 
