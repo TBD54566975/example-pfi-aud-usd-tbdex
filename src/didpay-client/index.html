@@ -31,18 +31,23 @@
     } 
     
     const did = await createOrLoadDid();
-    console.log(did);
+    console.log("customer id", did);
 
-    async function loadOfferings() {
 
-      // load the did from http://localhost:9000/did
+    // load the PFI (liquidity node) did from http://localhost:9000/did
+    const pfiDid = await fetch('http://localhost:9000/did').then(r => r.text());
+    console.log(pfiDid);
 
-      const pfiDid = await fetch('http://localhost:9000/did').then(r => r.text());
-      console.log(pfiDid);
 
-      const { data } = await TbdexHttpClient.getOfferings({ pfiDid: pfiDid });
-      const offeringsContainer = document.getElementById('offeringsContainer');
-      
+
+    // load the offerings from the PFI
+    const { data:offerings } = await TbdexHttpClient.getOfferings({ pfiDid: pfiDid });
+    console.log("offerings", offerings);
+    
+    
+    // show the offerings on the page
+    async function showOfferings(data) {
+      const offeringsContainer = document.getElementById('offeringsContainer');      
       data.forEach(offering => {
         const offeringElement = document.createElement('div');
         offeringElement.className = 'bg-gray-100 p-4 rounded-md shadow-sm mb-5';
@@ -68,8 +73,11 @@
         offeringsContainer.appendChild(offeringElement);
       });
     }
+    window.addEventListener('load', showOfferings(offerings));
 
-    window.addEventListener('load', loadOfferings);
+
+    
+
   </script>
 
     <div class="container mx-auto px-4 py-5">
@@ -147,10 +155,10 @@
                     </fieldset>
                 </div>
 
-                <!-- Submit Button -->
+                <!-- RFQ Button -->
                 <div class="flex items-center justify-between mt-4">
                     <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline" type="submit">
-                        Submit
+                        Request Quote
                     </button>
                 </div>
             </form>

@@ -47,7 +47,7 @@ httpApi.submit('rfq', async (ctx, rfq: Rfq) => {
   const offering = await OfferingRepository.getOffering({ id: rfq.offeringId })
 
 
-  if (rfq.payinMethod.kind == 'CREDIT_CARD_TOKEN' && offering.payinCurrency.currencyCode == 'USD' && offering.payoutCurrency.currencyCode == 'AUD' ) {
+  if (rfq.payinMethod.kind == 'CREDIT_CARD' && offering.payinCurrency.currencyCode == 'USD' && offering.payoutCurrency.currencyCode == 'AUD' ) {
     const quote = Quote.create(
       {
         metadata: {
@@ -56,7 +56,7 @@ httpApi.submit('rfq', async (ctx, rfq: Rfq) => {
           exchangeId: rfq.exchangeId
         },
         data: {
-          expiresAt: new Date(2024, 4, 1).toISOString(),
+          expiresAt: new Date(2028, 4, 1).toISOString(),
           payin: {
             currencyCode: 'USDC',
             amountSubunits: '100',
@@ -96,7 +96,11 @@ httpApi.submit('order', async (ctx, order: Order) => {
       'description': 'For remittances',
       'ip_address': '203.192.1.172',
       'email': 'test@testing.com',
-      'card_token': rfq.data.payinMethod.paymentDetails['pinPaymentsToken'],
+      'card[number]': rfq.data.payinMethod.paymentDetails['cc_number'],
+      'card[expiry_month]': rfq.data.payinMethod.paymentDetails['expiry_month'],
+      'card[expiry_year]': rfq.data.payinMethod.paymentDetails['expiry_year'],
+      'card[cvc]': rfq.data.payinMethod.paymentDetails['cvc'],
+      'card[name]': rfq.data.payinMethod.paymentDetails['name'],
       'metadata[OrderNumber]': '123456',
       'metadata[CustomerName]': 'Roland Robot'
     })
