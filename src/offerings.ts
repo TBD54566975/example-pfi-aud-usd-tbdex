@@ -13,20 +13,35 @@ const offering = Offering.create({
     payoutCurrency: { currencyCode: 'AUD' },
     payinCurrency: { currencyCode: 'USD' },
     payinMethods: [{
-      kind: 'CREDIT_CARD_TOKEN',
+      kind: 'CREDIT_CARD',
       requiredPaymentDetails: {
         '$schema': 'http://json-schema.org/draft-07/schema#',
-        'title': 'Credit Card Pin payments token',
+        'title': 'Credit Card',
         'type': 'object',
         'required': [
-          'pinPaymentsToken',
+          'cc_number', 'expiry_month', 'expiry_year', 'cvc', 'name'
         ],
         'additionalProperties': false,
         'properties': {
-          'pinPaymentsToken': {
-            'title': 'Single use CC card token',
-            'description': 'https://pinpayments.com/ offers tokens so CC is not stored by tbdex',
+          'cc_number': {
+            'title': 'credit card number',
             'type': 'string'
+          },
+          'expiry_month': {
+            'title': 'month of expiry',
+            'type': 'integer',
+          },
+          'expiry_year': {
+            'title': 'year of expiry',
+            'type': 'integer',
+          },
+          'cvc': {
+            'title': 'security digits',
+            'type': 'integer',
+          },
+          'name': {
+            'title': 'name on card',
+            'type': 'string',
           },
         }
       }

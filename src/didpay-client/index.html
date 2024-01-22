@@ -10,23 +10,43 @@
 
 
   <script type="module">
-    import {TbdexHttpClient} from 'https://cdn.jsdelivr.net/npm/@tbdex/http-client@0.22.1/dist/browser.mjs'
+    import {TbdexHttpClient, DevTools} from 'https://cdn.jsdelivr.net/npm/@tbdex/http-client@0.22.1/dist/browser.mjs'
     console.log(TbdexHttpClient)
 
+    async function createOrLoadDid() {
+      try {
+        // Check if the DID exists in local storage
+        const data = localStorage.getItem("did");
+        if (data) {
+          return JSON.parse(data);
+        } else {
+          // If the DID doesn't exist, generate a new DID
+          const did = await DevTools.createDid();
+          localStorage.setItem("did", JSON.stringify(did));
+          return did;
+        }
+      } catch (error) {
+        console.error('Error with Local Storage:', error);
+      }
+    } 
+    
+    const did = await createOrLoadDid();
+    console.log(did);
+
     async function loadOfferings() {
-      const { data } = await TbdexHttpClient.getOfferings({ pfiDid: "did:ion:EiCDEIDRwDI8NW2vyJaXx2xFquy3c7wk6YkSl__K-7MS2g:eyJkZWx0YSI6eyJwYXRjaGVzIjpbeyJhY3Rpb24iOiJyZXBsYWNlIiwiZG9jdW1lbnQiOnsicHVibGljS2V5cyI6W3siaWQiOiJkd24tc2lnIiwicHVibGljS2V5SndrIjp7ImNydiI6IkVkMjU1MTkiLCJrdHkiOiJPS1AiLCJ4IjoiVTU5Ry03dGE5bFU5NFMxVkhTMEg4TzBKMkpNcTBQamJPYUFTQzk0UjRZMCJ9LCJwdXJwb3NlcyI6WyJhdXRoZW50aWNhdGlvbiIsImFzc2VydGlvbk1ldGhvZCJdLCJ0eXBlIjoiSnNvbldlYktleTIwMjAifV0sInNlcnZpY2VzIjpbeyJpZCI6InBmaSIsInNlcnZpY2VFbmRwb2ludCI6Imh0dHA6Ly9sb2NhbGhvc3Q6OTAwMCIsInR5cGUiOiJQRkkifV19fV0sInVwZGF0ZUNvbW1pdG1lbnQiOiJFaURuNWFldUR0djRraURXYUh5d2gwVmZlb1BEQnJoZ2l3QVR0ZTUzMVFlYlV3In0sInN1ZmZpeERhdGEiOnsiZGVsdGFIYXNoIjoiRWlEVlpaUnpwa0IyQ0hGZkF6OFZjbTczOW90dS1LV3VGTkczUDE2Mnh1THZDQSIsInJlY292ZXJ5Q29tbWl0bWVudCI6IkVpQWtLN0wyQkF4NWhILVRPcXRURUdVRTY4ZFg5RVl5SXRlTUROR3NSdk5fSmcifX0" });
+
+      // load the did from http://localhost:9000/did
+
+      const pfiDid = await fetch('http://localhost:9000/did').then(r => r.text());
+      console.log(pfiDid);
+
+      const { data } = await TbdexHttpClient.getOfferings({ pfiDid: pfiDid });
       const offeringsContainer = document.getElementById('offeringsContainer');
       
       data.forEach(offering => {
         const offeringElement = document.createElement('div');
         offeringElement.className = 'bg-gray-100 p-4 rounded-md shadow-sm mb-5';
         
-        const radio = document.createElement('input');
-        radio.type = 'radio';
-        radio.name = 'selectedOffering';
-        radio.value = offering.metadata.id;
-        offeringElement.appendChild(radio);
-
         const flagImage = document.createElement('img');
         flagImage.src = `https://flagcdn.com/w160/au.png`; // Update with correct path
         flagImage.alt = 'Flag';
