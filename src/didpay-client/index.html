@@ -6,86 +6,16 @@
     <title>Payment Form</title>
     <link href="https://unpkg.com/tailwindcss@^1.0/dist/tailwind.min.css" rel="stylesheet">    
 </head>
+
 <body>
 
-
-  <script type="module">
-    import {TbdexHttpClient, DevTools} from 'https://cdn.jsdelivr.net/npm/@tbdex/http-client@0.22.1/dist/browser.mjs'
-    console.log(TbdexHttpClient)
-
-    async function createOrLoadDid() {
-      try {
-        // Check if the DID exists in local storage
-        const data = localStorage.getItem("did");
-        if (data) {
-          return JSON.parse(data);
-        } else {
-          // If the DID doesn't exist, generate a new DID
-          const did = await DevTools.createDid();
-          localStorage.setItem("did", JSON.stringify(did));
-          return did;
-        }
-      } catch (error) {
-        console.error('Error with Local Storage:', error);
-      }
-    } 
-    
-    const did = await createOrLoadDid();
-    console.log("customer id", did);
-
-
-    // load the PFI (liquidity node) did from http://localhost:9000/did
-    const pfiDid = await fetch('http://localhost:9000/did').then(r => r.text());
-    console.log(pfiDid);
-
-
-
-    // load the offerings from the PFI
-    const { data:offerings } = await TbdexHttpClient.getOfferings({ pfiDid: pfiDid });
-    console.log("offerings", offerings);
-    
-    
-    // show the offerings on the page
-    async function showOfferings(data) {
-      const offeringsContainer = document.getElementById('offeringsContainer');      
-      data.forEach(offering => {
-        const offeringElement = document.createElement('div');
-        offeringElement.className = 'bg-gray-100 p-4 rounded-md shadow-sm mb-5';
-        
-        const flagImage = document.createElement('img');
-        flagImage.src = `https://flagcdn.com/w160/au.png`; // Update with correct path
-        flagImage.alt = 'Flag';
-        flagImage.style = 'width: 50px; height: 30px;';
-        offeringElement.appendChild(flagImage);
-
-        const description = document.createElement('p');
-        description.textContent = offering.data.description;
-        offeringElement.appendChild(description);
-
-        const payoutCurrency = document.createElement('p');
-        payoutCurrency.textContent = `Payout Currency: ${offering.data.payoutCurrency.currencyCode}`;
-        offeringElement.appendChild(payoutCurrency);
-
-        const payinMethods = document.createElement('p');
-        payinMethods.textContent = `Pay-in Methods: ${offering.data.payinMethods.map(m => m.kind).join(', ')}`;
-        offeringElement.appendChild(payinMethods);
-
-        offeringsContainer.appendChild(offeringElement);
-      });
-    }
-    window.addEventListener('load', showOfferings(offerings));
-
-
-    
-
-  </script>
 
     <div class="container mx-auto px-4 py-5">
         <div class="w-full max-w-2xl mx-auto">
             <form class="bg-white shadow-md rounded px-4 pt-4 pb-4 mb-4">
 
               <!-- Offerings Section -->
-                <div id="offeringsContainer">
+               <div id="offeringsContainer">
                   <!-- Offerings will be loaded here -->
               </div>              
                 <!-- Credit Card Information Section -->
@@ -155,14 +85,187 @@
                     </fieldset>
                 </div>
 
+
+
                 <!-- RFQ Button -->
                 <div class="flex items-center justify-between mt-4">
                     <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline" type="submit">
                         Request Quote
                     </button>
                 </div>
+
+                <!-- Quote Section -->
+                <div id="quoteContainer">
+                    <!-- Quote will be loaded here -->
+                </div>              
+    
+
             </form>
         </div>
     </div>
 </body>
+
+
+<script type="module">
+    import {TbdexHttpClient, DevTools, Rfq, Quote} from 'https://cdn.jsdelivr.net/npm/@tbdex/http-client@0.22.1/dist/browser.mjs'
+    console.log(TbdexHttpClient)
+
+    async function createOrLoadDid() {
+      try {
+        // Check if the DID exists in local storage
+        const data = localStorage.getItem("did");
+        if (data) {
+          return JSON.parse(data);
+        } else {
+          // If the DID doesn't exist, generate a new DID
+          const did = await DevTools.createDid();
+          localStorage.setItem("did", JSON.stringify(did));
+          return did;
+        }
+      } catch (error) {
+        console.error('Error with Local Storage:', error);
+      }
+    } 
+    
+    // create or load the customer did
+    const did = await createOrLoadDid();
+    console.log("customer id", did.did);
+    const { privateKeyJwk } = did.keySet.verificationMethodKeys[0]
+    const kid = did.document.verificationMethod[0].id
+    console.log("customer private key", privateKeyJwk);
+    console.log("kid", kid);
+
+
+    // load the PFI (liquidity node) did from http://localhost:9000/did
+    const pfiDid = await fetch('http://localhost:9000/did').then(r => r.text());
+    console.log(pfiDid);
+
+
+    // load the offerings from the PFI
+    const { data:offerings } = await TbdexHttpClient.getOfferings({ pfiDid: pfiDid });
+    console.log("offerings", offerings);
+    
+    
+    // show the offerings on the page
+    async function showOfferings(data) {
+      const offeringsContainer = document.getElementById('offeringsContainer');      
+      data.forEach(offering => {
+        const offeringElement = document.createElement('div');
+        offeringElement.className = 'bg-gray-100 p-4 rounded-md shadow-sm mb-5';
+        
+        const flagImage = document.createElement('img');
+        flagImage.src = `https://flagcdn.com/w160/au.png`; // Update with correct path
+        flagImage.alt = 'Flag';
+        flagImage.style = 'width: 50px; height: 30px;';
+        offeringElement.appendChild(flagImage);
+
+        const description = document.createElement('p');
+        description.textContent = offering.data.description;
+        offeringElement.appendChild(description);
+
+        const payoutCurrency = document.createElement('p');
+        payoutCurrency.textContent = `Payout Currency: ${offering.data.payoutCurrency.currencyCode}`;
+        offeringElement.appendChild(payoutCurrency);
+
+        const payinMethods = document.createElement('p');
+        payinMethods.textContent = `Pay-in Methods: ${offering.data.payinMethods.map(m => m.kind).join(', ')}`;
+        offeringElement.appendChild(payinMethods);
+
+        offeringsContainer.appendChild(offeringElement);
+      });
+    }
+
+
+    showOfferings(offerings);
+
+    // Function to get Verifiable Credential
+    async function getVerifiableCredential(name) {
+        return await fetch(`http://localhost:9000/vc?name=${name}&country=Australia&did=${did.id}`).then(r => r.text());        
+    }
+
+    /*
+    * This is a very simple polling function that will poll for the status of an order.
+    */
+    async function pollForStatus(order, pfiDid, privateKeyJwk, kid) {
+        const always = true
+        while (always) {
+            const exchanges = await TbdexHttpClient.getExchanges({
+            pfiDid: pfiDid,
+            filter: { id: order.exchangeId },
+            privateKeyJwk,
+            kid
+            })
+
+            const [ exchange ] = exchanges.data
+
+            for (const message of exchange) {
+            if (message instanceof OrderStatus) {
+                const orderStatus = message
+                console.log('orderStatus', orderStatus.data.orderStatus)
+            }
+            if (message instanceof Close) {
+                const close = message
+                console.log('close', close.data.reason)
+                return
+            }
+            }
+        }
+    }    
+
+
+    // Process the Request for Quote
+    async function handleRFQRequest(event) {
+        event.preventDefault(); // Prevent default form submission behavior
+
+        const name = document.getElementById('name').value; // Get the name from the form
+        const credential = await getVerifiableCredential(name); // Get the Verifiable Credential
+
+        const transferAmount = document.getElementById('transferAmount').value; // Get the transfer amount from the form
+
+
+        const rfq = Rfq.create({
+            metadata: { from: did.did, to: pfiDid },
+            data: {
+                offeringId: offerings[0].id,
+                payinSubunits: transferAmount,
+                payinMethod: {
+                    kind: 'CREDIT_CARD',
+                    paymentDetails: {
+                        cc_number: document.getElementById('number').value,
+                        expiry_month: document.getElementById('expiry_month').value,
+                        expiry_year: document.getElementById('expiry_year').value,
+                        cvc: document.getElementById('cvc').value
+                    }
+                },
+                payoutMethod: {
+                    kind: 'AUSTRALIAN_BANK_ACCOUNT',
+                    paymentDetails: {
+                        accountNumber: '987654321', // replace with actual account number
+                        bsbNumber: '123456', // replace with actual BSB number
+                        accountName: 'Mr Roland Robot' // replace with actual account name
+                    }
+                },
+                claims: [credential]
+            }})
+        
+        await rfq.sign(did)
+        const resp = await TbdexHttpClient.sendMessage({ message: rfq })
+        // asser that the response is a success
+        console.log('send rfq response', JSON.stringify(resp, null, 2))
+        
+
+
+    }
+
+    const rfqButton = document.querySelector('form button[type="submit"]');
+    rfqButton.addEventListener('click', handleRFQRequest);
+    
+    
+
+
+    
+
+  </script>
+
+  
 </html>
