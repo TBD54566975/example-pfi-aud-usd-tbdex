@@ -107,7 +107,7 @@
 
 
 <script type="module">
-    import {TbdexHttpClient, DevTools, Rfq, Quote, Order} from 'https://cdn.jsdelivr.net/npm/@tbdex/http-client@0.22.1/dist/browser.mjs'
+    import {TbdexHttpClient, DevTools, Rfq, Quote, Order, Close, OrderStatus} from 'https://cdn.jsdelivr.net/npm/@tbdex/http-client@0.22.1/dist/browser.mjs'
     console.log(TbdexHttpClient)
 
     async function createOrLoadDid() {
@@ -256,7 +256,33 @@
             await order.sign(did)
             const orderResponse = await TbdexHttpClient.sendMessage({ message: order })
             console.log('we have an order response')
-            console.log('orderResponse',  JSON.stringify(orderResponse, null, 2))            
+            console.log('orderResponse',  JSON.stringify(orderResponse, null, 2))  
+            
+            // now poll for the order status
+            while(true) {
+                const exchanges = await TbdexHttpClient.getExchanges({pfiDid: pfiDid,filter: { id: rfq.exchangeId },did })   
+                const [exchange] = exchanges.data;
+                // find the quote 
+                const close = exchange.find(message => message instanceof Close);
+                if (close) {
+                    console.log('we have a close')
+                    console.log('close', JSON.stringify(close, null, 2))
+
+                    // appent the close to the page
+                    const closeElement = document.createElement('div');
+                    closeElement.className = 'bg-gray-100 p-4 rounded-md shadow-sm mb-5';
+                    const closeText = document.createElement('p');
+                    closeText.textContent = `Order Result: ${close.data.reason}`;
+                    closeElement.appendChild(closeText);
+                    quoteContainer.appendChild(closeElement);
+                    break
+                }
+
+                // rest for a bit
+                await new Promise(resolve => setTimeout(resolve, 1000))
+
+            }
+
         })
         quoteElement.appendChild(acceptButton);
 
