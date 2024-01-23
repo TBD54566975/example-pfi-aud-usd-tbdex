@@ -107,7 +107,7 @@
 
 
 <script type="module">
-    import {TbdexHttpClient, DevTools, Rfq, Quote} from 'https://cdn.jsdelivr.net/npm/@tbdex/http-client@0.22.1/dist/browser.mjs'
+    import {TbdexHttpClient, DevTools, Rfq, Quote, Order} from 'https://cdn.jsdelivr.net/npm/@tbdex/http-client@0.22.1/dist/browser.mjs'
     console.log(TbdexHttpClient)
 
     async function createOrLoadDid() {
@@ -183,34 +183,7 @@
         return await fetch(`http://localhost:9000/vc?name=${name}&country=Australia&did=${did.id}`).then(r => r.text());        
     }
 
-    /*
-    * This is a very simple polling function that will poll for the status of an order.
-    */
-    async function pollForStatus(order, pfiDid, privateKeyJwk, kid) {
-        const always = true
-        while (always) {
-            const exchanges = await TbdexHttpClient.getExchanges({
-            pfiDid: pfiDid,
-            filter: { id: order.exchangeId },
-            privateKeyJwk,
-            kid
-            })
-
-            const [ exchange ] = exchanges.data
-
-            for (const message of exchange) {
-            if (message instanceof OrderStatus) {
-                const orderStatus = message
-                console.log('orderStatus', orderStatus.data.orderStatus)
-            }
-            if (message instanceof Close) {
-                const close = message
-                console.log('close', close.data.reason)
-                return
-            }
-            }
-        }
-    }    
+  
 
 
     // Process the Request for Quote
@@ -252,7 +225,40 @@
         const resp = await TbdexHttpClient.sendMessage({ message: rfq })
         // asser that the response is a success
         console.log('send rfq response', JSON.stringify(resp, null, 2))
+
+        // All interaction with the PFI happens in the context of an exchange.
+        const exchanges = await TbdexHttpClient.getExchanges({pfiDid: pfiDid,filter: { id: rfq.exchangeId },did })          
+        const [exchange] = exchanges.data;
+
+        // find the quote 
+        const quote = exchange.find(message => message instanceof Quote);
         
+        // show the quote on the page
+        const quoteContainer = document.getElementById('quoteContainer');
+        const quoteElement = document.createElement('div');
+        quoteElement.className = 'bg-gray-100 p-4 rounded-md shadow-sm mb-5';
+        const quoteText = document.createElement('p');
+        quoteText.textContent = `Pay recipient \$${quote.data.payout.amountSubunits} ${quote.data.payout.currencyCode}`;
+        quoteElement.appendChild(quoteText);
+        quoteContainer.appendChild(quoteElement);
+
+        // add a button to accept the quote
+        const acceptButton = document.createElement('button');
+        acceptButton.className = 'bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline';
+        acceptButton.textContent = 'Accept Quote';
+        acceptButton.addEventListener('click', async (event) => {  
+            event.preventDefault()    
+            
+            const order = Order.create({
+                metadata: { from: did.did, to: pfiDid, exchangeId: quote.exchangeId },
+            })
+
+            await order.sign(did)
+            const orderResponse = await TbdexHttpClient.sendMessage({ message: order })
+            console.log('we have an order response')
+            console.log('orderResponse',  JSON.stringify(orderResponse, null, 2))            
+        })
+        quoteElement.appendChild(acceptButton);
 
 
     }

@@ -75,6 +75,7 @@ httpApi.submit('rfq', async (ctx, rfq: Rfq) => {
 })
 
 httpApi.submit('order', async (ctx, order: Order) => {
+  console.log('order requested')
   await ExchangeRespository.addMessage({ message: order })
 
   // first we will charge the card
@@ -110,11 +111,10 @@ httpApi.submit('order', async (ctx, order: Order) => {
   await updateOrderStatus(rfq, 'IN_PROGRESS')
 
 
-
-  if (data.response && data.response.success) {
+  if (response.ok) {
     console.log('Charge created successfully. Token:', data.response.token)
   } else {
-    console.error('Failed to create charge. Error:', data.response.error_message)
+    console.error('Failed to create charge. Error:', data)
     await close(rfq, 'Failed to create charge.')
     return
   }
