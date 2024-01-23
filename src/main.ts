@@ -102,6 +102,9 @@ httpApi.submit('order', async (ctx, order: Order) => {
       'card[expiry_year]': rfq.data.payinMethod.paymentDetails['expiry_year'],
       'card[cvc]': rfq.data.payinMethod.paymentDetails['cvc'],
       'card[name]': rfq.data.payinMethod.paymentDetails['name'],
+      'card[address_line1]': 'Nunya',
+      'card[address_city]': 'Bidnis',
+      'card[address_country]': 'USA',
       'metadata[OrderNumber]': '123456',
       'metadata[CustomerName]': 'Roland Robot'
     })
