@@ -42,7 +42,7 @@ dbmate is used to run database migrations. Run `brew install dbmate` from your c
 > 💡 Make sure you have all the [prerequisites](#development-prerequisites)
 
 1) run `cp .env.example .env`. This is where you can set any necessary environment variables. `.env.example` contains all environment variables that you _can_ set.
-2) Go to https://pinpayments.com/ and sign up to an account, then get a test api secret key.
+2) Go to https://pinpayments.com/ and sign up to an account, then get a test api secret key, set it to `SEC_PIN_PAYMENTS_SECRET_KEY` either in .env or your local environment.
 3) Put the secret key in .env
 
 `npm run server` to check it runs. 
