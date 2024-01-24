@@ -4,15 +4,15 @@ This is an example remittance PFI implementation using the tbdex protocol which 
 
 This example will: 
 
-* Show a single HTML page plain javascript client page that captures a credit card, creates a DID and requests a Verifiable Credential.
+* Show a plain HTML and vanilla javascript client page that captures a credit card, creates a DID and requests a Verifiable Credential.
 * A server which does an "OFAC" check on the customer and issues a verifiable credential only if they are not on the OFAC list.
 * A tbdex protocol implementation that will charge the customer's credit card in USD and remit AUD as required to specified bank account.
 
-See `src/didpay-client/index.html` for the client code and `src/main.ts` for the liquidity node code (server).
+See [index.html](src/didpay-client/index.html) for the client code and [main.ts](src/main.ts) for the liquidity node code (server).
 
 NOTE: this is not using market rates, or anything sensible, and is for illustrative purposes only, not production use.  
 
-<img width="984" alt="Screenshot 2023-11-25 at 8 48 29 am" src="https://github.com/TBD54566975/example-aud-usd-pfi/assets/14976/2f86b963-b63e-4f68-a277-a0b5882d7385">
+![image](https://github.com/TBD54566975/example-pfi-aud-usd-tbdex/assets/14976/6db08cbb-c0f0-4881-a120-214c33a60443)
 
 
 # Development Prerequisites
@@ -78,3 +78,6 @@ Configuration can be set using environment variables. Defaults are set in `src/c
 | [CONTRIBUTING.md](./CONTRIBUTING.md)       | Developer guide to build, test, run, access CI, chat, discuss, file issues     |
 | [GOVERNANCE.md](./GOVERNANCE.md)           | Project governance                                                             |
 | [LICENSE](./LICENSE)                       | Apache License, Version 2.0                                                    |
+
+<img width="400" alt="Screenshot 2023-11-25 at 8 48 29 am" src="https://github.com/TBD54566975/example-aud-usd-pfi/assets/14976/2f86b963-b63e-4f68-a277-a0b5882d7385">
+
