@@ -50,10 +50,10 @@ jobs:
       run: echo "SEC_PIN_PAYMENTS_SECRET_KEY=${{ secrets.SEC_PIN_PAYMENTS_SECRET_KEY }}" > .env
     - name: Run PFI server and test
       run: |
-        npm run compile && node --enable-source-maps dist/main.js &
+        npm run server &
         SERVER_PID=$!
     
-        sleep 5
+        sleep 10
     
         # Check if localhost:9000/did returns a 200 OK
         RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:9000/did)
