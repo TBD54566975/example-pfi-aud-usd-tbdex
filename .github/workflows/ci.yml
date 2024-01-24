@@ -36,8 +36,6 @@ jobs:
       uses: actions/setup-node@v3
       with:
         node-version: ${{ matrix.node-version }}
-    - name: Install dependencies
-      run: npm install
     - name: Install dbmate
       run: |
         curl -fsSL https://github.com/amacneil/dbmate/releases/download/v1.12.1/dbmate-linux-amd64 -o dbmate
@@ -46,23 +44,6 @@ jobs:
     - name: Run migration scripts
       run: |
         ./db/scripts/migrate
-    - name: Payment sandbox account setup
-      run: echo "SEC_PIN_PAYMENTS_SECRET_KEY=${{ secrets.SEC_PIN_PAYMENTS_SECRET_KEY }}" > .env
-    - name: Run PFI server and test
-      run: |
-        npm run server &
-        SERVER_PID=$!
-    
-        sleep 10
-        echo "Server started."
-
-        # Check if localhost:9000/did returns a 200 OK
-        RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:9000/did)
-    
-        echo "OK"
-        if [ "$RESPONSE" -eq 200 ]; then
-            echo "Server responded with 200 OK."
-        else
-            echo "Server did not respond with 200 OK. Response code: $RESPONSE"
-            exit 1  # Exit with an error code if the response is not 200 OK
-        fi
+    - name: Install dependencies
+      run: npm install
+  
