@@ -52,7 +52,7 @@
     "compile": "tsc",
     "lint": "eslint . --ext .ts --max-warnings 0",
     "lint:fix": "eslint . --ext .ts --fix",
-    "server": "./db/scripts/start-pg && ./db/scripts/migrate && npm run clean && npm run compile && node --enable-source-maps dist/main.js",
+    "server": "npm run compile && node --enable-source-maps dist/main.js",
     "test": "rimraf dist/tests && npm run compile && node --test",
     "try": "npm run clean && npm run compile && node --enable-source-maps dist/client-test.js",
     "example-create-issuer": "npm run clean && npm run compile && node --enable-source-maps dist/example/create-issuer.js",

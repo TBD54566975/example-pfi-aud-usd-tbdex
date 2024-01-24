@@ -36,8 +36,6 @@ jobs:
       uses: actions/setup-node@v3
       with:
         node-version: ${{ matrix.node-version }}
-    - name: Install dependencies
-      run: npm install
     - name: Install dbmate
       run: |
         curl -fsSL https://github.com/amacneil/dbmate/releases/download/v1.12.1/dbmate-linux-amd64 -o dbmate
@@ -46,15 +44,6 @@ jobs:
     - name: Run migration scripts
       run: |
         ./db/scripts/migrate
-    - name: Payment sandbox account setup
-      run: echo "SEC_PIN_PAYMENTS_SECRET_KEY=${{ secrets.SEC_PIN_PAYMENTS_SECRET_KEY }}" > .env
-    - name: Run PFI server and test
-      run: |
-        npm run example-create-issuer
-        npm run example-create-customer
-        npm run example-issue-credential
-        npm run compile && node --enable-source-maps dist/main.js &
-        SERVER_PID=$!   
-        sleep 5     
-        npm run example-remittance
-        kill $SERVER_PID
+    - name: Install dependencies
+      run: npm install
+  

@@ -8,25 +8,40 @@ const issuer = await fs.readFile('issuer-did.txt', 'utf-8')
 const offering = Offering.create({
   metadata: { from: config.did.id },
   data: {
-    description: 'rip off offering USD to AUD',
+    description: 'Totes legit USD to AUD liquidity node',
     payoutUnitsPerPayinUnit: '1.1', // ex. we send 100 dollars, so that means 110 AUD - clearly not a good price!
     payoutCurrency: { currencyCode: 'AUD' },
     payinCurrency: { currencyCode: 'USD' },
     payinMethods: [{
-      kind: 'CREDIT_CARD_TOKEN',
+      kind: 'CREDIT_CARD',
       requiredPaymentDetails: {
         '$schema': 'http://json-schema.org/draft-07/schema#',
-        'title': 'Credit Card Pin payments token',
+        'title': 'Credit Card',
         'type': 'object',
         'required': [
-          'pinPaymentsToken',
+          'cc_number', 'expiry_month', 'expiry_year', 'cvc', 'name'
         ],
         'additionalProperties': false,
         'properties': {
-          'pinPaymentsToken': {
-            'title': 'Single use CC card token',
-            'description': 'https://pinpayments.com/ offers tokens so CC is not stored by tbdex',
+          'cc_number': {
+            'title': 'credit card number',
             'type': 'string'
+          },
+          'expiry_month': {
+            'title': 'month of expiry',
+            'type': 'integer',
+          },
+          'expiry_year': {
+            'title': 'year of expiry',
+            'type': 'integer',
+          },
+          'cvc': {
+            'title': 'security digits',
+            'type': 'integer',
+          },
+          'name': {
+            'title': 'name on card',
+            'type': 'string',
           },
         }
       }

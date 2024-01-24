@@ -1,22 +1,34 @@
 import { DevTools } from '@tbdex/http-client'
-import { createOrLoadDid } from './utils.js'
-import fs from 'node:fs'
-
-
-
-// load alice's did from a file caleld alice-did.txt
-const customerDid = fs.readFileSync('alice-did.txt', 'utf-8')
-
-// load issuer's did from a file called issuer-did.txt
-const issuer = await createOrLoadDid('issuer.json')
-
-//
-// At this point we can check if the user is sanctioned or not and decide to issue the credential.
-// TOOD: implement the actual sanctions check!
 
 import fetch from 'node-fetch'
 import Papa from 'papaparse'
 import fuzzysort from 'fuzzysort'
+
+import fs from 'fs/promises'
+
+
+export async function createOrLoadDid(filename: string) {
+  // Check if the file exists
+  try {
+    const data = await fs.readFile(filename, 'utf-8')
+    return JSON.parse(data)
+  } catch (error) {
+    // If the file doesn't exist, generate a new DID
+    if (error.code === 'ENOENT') {
+      const did = await DevTools.createDid()
+      await fs.writeFile(filename, JSON.stringify(did, null, 2))
+      return did
+    }
+    console.error('Error reading from file:', error)
+  }
+}
+
+
+// load issuer's did from a file called issuer-did.txt
+const issuer = await createOrLoadDid('issuer.json')
+// wtite issuer did to file so server can trust it:
+
+await fs.writeFile('issuer-did.txt', issuer.did)
 
 type SanctionEntry = {
   name: string;
@@ -70,37 +82,37 @@ function searchSanctions(queryData: QueryData, data: SanctionEntry[]): SanctionE
   return results
 }
 
-// Example usage
-const sanctionsSearch = searchSanctions({
-  name: 'Alice Acme',
-  minScore: 80,
-  country: 'Australia'
-}, sanctionsData)
+/*
+ * Check if the person is sanctioned and if not - issue them a VC signed by the issuer.
+ */
+export async function requestCredential(name: string, country: string, customerDid: string) {
+  const sanctionsSearch = searchSanctions({
+    name: name,
+    minScore: 80,
+    country: country
+  }, sanctionsData)
 
-if (sanctionsSearch.length > 0) {
-  console.log('Sanctions found for Alice Acme')
-  console.log(sanctionsSearch)
-  process.exit(-1)
-}
-
-
-
-//
-//
-// Create a sanctions credential so that the PFI knows that Alice is legit.
-//
-const { signedCredential } = await DevTools.createCredential({
-  type    : 'SanctionCredential',
-  issuer  : issuer,
-  subject : customerDid,
-  data    : {
-    'beep': 'boop'
+  if (sanctionsSearch.length > 0) {
+    console.log('we have a naughty person, we cannot do business with them')
+    return false
   }
-})
 
-console.log('Copy this signed credential for later use:\n\n', signedCredential)
-// write to a file
-fs.writeFileSync('signed-credential.txt', signedCredential)
+
+  //
+  // Create a sanctions credential so that the PFI knows that Alice is legit.
+  //
+  const { signedCredential } = await DevTools.createCredential({
+    type    : 'SanctionCredential',
+    issuer  : issuer,
+    subject : customerDid,
+    data    : {
+      'beep': 'boop'
+    }
+  })
+
+  return signedCredential
+
+}
 
 
 

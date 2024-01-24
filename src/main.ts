@@ -9,6 +9,7 @@ import { config } from './config.js'
 import { Postgres, ExchangeRespository } from './db/index.js'
 import { HttpServerShutdownHandler } from './http-shutdown-handler.js'
 import { TbdexHttpServer } from '@tbdex/http-server'
+import { requestCredential } from './credential-issuer.js'
 
 
 console.log('PFI DID: ', config.did.id)
@@ -40,13 +41,14 @@ process.on('SIGTERM', async () => {
 
 const httpApi = new TbdexHttpServer({ exchangesApi: ExchangeRespository, offeringsApi: OfferingRepository })
 
+// provide the quote
 httpApi.submit('rfq', async (ctx, rfq: Rfq) => {
   await ExchangeRespository.addMessage({ message: rfq })
 
   const offering = await OfferingRepository.getOffering({ id: rfq.offeringId })
 
 
-  if (rfq.payinMethod.kind == 'CREDIT_CARD_TOKEN' && offering.payinCurrency.currencyCode == 'USD' && offering.payoutCurrency.currencyCode == 'AUD' ) {
+  if (rfq.payinMethod.kind == 'CREDIT_CARD' && offering.payinCurrency.currencyCode == 'USD' && offering.payoutCurrency.currencyCode == 'AUD' ) {
     const quote = Quote.create(
       {
         metadata: {
@@ -55,7 +57,7 @@ httpApi.submit('rfq', async (ctx, rfq: Rfq) => {
           exchangeId: rfq.exchangeId
         },
         data: {
-          expiresAt: new Date(2024, 4, 1).toISOString(),
+          expiresAt: new Date(2028, 4, 1).toISOString(),
           payin: {
             currencyCode: 'USDC',
             amountSubunits: '100',
@@ -73,7 +75,9 @@ httpApi.submit('rfq', async (ctx, rfq: Rfq) => {
   }
 })
 
+// When the customer accepts the order
 httpApi.submit('order', async (ctx, order: Order) => {
+  console.log('order requested')
   await ExchangeRespository.addMessage({ message: order })
 
   // first we will charge the card
@@ -95,7 +99,14 @@ httpApi.submit('order', async (ctx, order: Order) => {
       'description': 'For remittances',
       'ip_address': '203.192.1.172',
       'email': 'test@testing.com',
-      'card_token': rfq.data.payinMethod.paymentDetails['pinPaymentsToken'],
+      'card[number]': rfq.data.payinMethod.paymentDetails['cc_number'],
+      'card[expiry_month]': rfq.data.payinMethod.paymentDetails['expiry_month'],
+      'card[expiry_year]': rfq.data.payinMethod.paymentDetails['expiry_year'],
+      'card[cvc]': rfq.data.payinMethod.paymentDetails['cvc'],
+      'card[name]': rfq.data.payinMethod.paymentDetails['name'],
+      'card[address_line1]': 'Nunya',
+      'card[address_city]': 'Bidnis',
+      'card[address_country]': 'USA',
       'metadata[OrderNumber]': '123456',
       'metadata[CustomerName]': 'Roland Robot'
     })
@@ -105,11 +116,10 @@ httpApi.submit('order', async (ctx, order: Order) => {
   await updateOrderStatus(rfq, 'IN_PROGRESS')
 
 
-
-  if (data.response && data.response.success) {
+  if (response.ok) {
     console.log('Charge created successfully. Token:', data.response.token)
   } else {
-    console.error('Failed to create charge. Error:', data.response.error_message)
+    console.error('Failed to create charge. Error:', data)
     await close(rfq, 'Failed to create charge.')
     return
   }
@@ -196,8 +206,19 @@ httpApi.api.get('/', (req, res) => {
   res.send('Please use the tbdex protocol to communicate with this server or a suitable library: https://github.com/TBD54566975/tbdex-protocol')
 })
 
+
+// This is just for example convenience. In the real world this would be discovered by other means.
 httpApi.api.get('/did', (req, res) => {
   res.send(config.did.id)
+})
+
+
+// A very low fi implementation of a credential issuer - will just check they are not sanctioned.
+// In the real world this would be done via OIDC4VC or similar.
+// In this case a check could be done on each transaction so a VC could be optional, but it makes the example richer to have it stored in the client (html) and sent with the RFQ.
+httpApi.api.get('/vc', async (req, res) => {
+  const credentials = await requestCredential(req.query.name as string, req.query.country as string, req.query.did as string)
+  res.send(credentials)
 })
 
 
