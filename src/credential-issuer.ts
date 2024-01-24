@@ -1,14 +1,33 @@
 import { DevTools } from '@tbdex/http-client'
-import { createOrLoadDid } from './example/utils.js'
+
 import fetch from 'node-fetch'
 import Papa from 'papaparse'
 import fuzzysort from 'fuzzysort'
+
+import fs from 'fs/promises'
+
+
+export async function createOrLoadDid(filename: string) {
+  // Check if the file exists
+  try {
+    const data = await fs.readFile(filename, 'utf-8')
+    return JSON.parse(data)
+  } catch (error) {
+    // If the file doesn't exist, generate a new DID
+    if (error.code === 'ENOENT') {
+      const did = await DevTools.createDid()
+      await fs.writeFile(filename, JSON.stringify(did, null, 2))
+      return did
+    }
+    console.error('Error reading from file:', error)
+  }
+}
 
 
 // load issuer's did from a file called issuer-did.txt
 const issuer = await createOrLoadDid('issuer.json')
 // wtite issuer did to file so server can trust it:
-import fs from 'fs/promises'
+
 await fs.writeFile('issuer-did.txt', issuer.did)
 
 type SanctionEntry = {

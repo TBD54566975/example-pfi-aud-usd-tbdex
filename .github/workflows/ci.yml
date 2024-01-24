@@ -50,11 +50,19 @@ jobs:
       run: echo "SEC_PIN_PAYMENTS_SECRET_KEY=${{ secrets.SEC_PIN_PAYMENTS_SECRET_KEY }}" > .env
     - name: Run PFI server and test
       run: |
-        npm run example-create-issuer
-        npm run example-create-customer
-        npm run example-issue-credential
         npm run compile && node --enable-source-maps dist/main.js &
-        SERVER_PID=$!   
-        sleep 5     
-        npm run example-remittance
+        SERVER_PID=$!
+    
+        sleep 5
+    
+        # Check if localhost:9000/did returns a 200 OK
+        RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:9000/did)
+    
+        if [ "$RESPONSE" -eq 200 ]; then
+            echo "Server responded with 200 OK."
+        else
+            echo "Server did not respond with 200 OK. Response code: $RESPONSE"
+            exit 1  # Exit with an error code if the response is not 200 OK
+        fi
+    
         kill $SERVER_PID

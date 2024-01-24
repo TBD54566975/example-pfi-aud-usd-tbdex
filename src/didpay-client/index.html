@@ -150,9 +150,9 @@
                 <!-- Amount to Transfer Section -->
                 <div class="bg-gray-100 p-4 rounded-md shadow-sm mb-5">
                     <fieldset>
-                        <legend class="text-lg font-bold mb-3">Amount to Transfer</legend>
+                        <legend class="text-lg font-bold mb-3">Amount to Send</legend>
                         <div>
-                            <label class="block text-gray-700 text-sm font-bold mb-1" for="transferAmount">Amount</label>
+                            <label class="block text-gray-700 text-sm font-bold mb-1" for="transferAmount">US Dollars</label>
                             <input class="form-input" type="number" id="transferAmount" placeholder="Enter amount">
                         </div>
                     </fieldset>
@@ -307,7 +307,7 @@
         const quoteElement = document.createElement('div');
         quoteElement.className = 'bg-gray-100 p-4 rounded-md shadow-sm mb-5';
         const quoteText = document.createElement('p');
-        quoteText.textContent = `Pay recipient \$${quote.data.payout.amountSubunits} ${quote.data.payout.currencyCode}`;
+        quoteText.textContent = `Pay recipient \$${quote.data.payout.amountSubunits} ${quote.data.payout.currencyCode} Australian Dollars.`;
         quoteElement.appendChild(quoteText);
         quoteContainer.appendChild(quoteElement);
 

@@ -41,6 +41,7 @@ process.on('SIGTERM', async () => {
 
 const httpApi = new TbdexHttpServer({ exchangesApi: ExchangeRespository, offeringsApi: OfferingRepository })
 
+// provide the quote
 httpApi.submit('rfq', async (ctx, rfq: Rfq) => {
   await ExchangeRespository.addMessage({ message: rfq })
 
@@ -74,6 +75,7 @@ httpApi.submit('rfq', async (ctx, rfq: Rfq) => {
   }
 })
 
+// When the customer accepts the order
 httpApi.submit('order', async (ctx, order: Order) => {
   console.log('order requested')
   await ExchangeRespository.addMessage({ message: order })
@@ -204,10 +206,16 @@ httpApi.api.get('/', (req, res) => {
   res.send('Please use the tbdex protocol to communicate with this server or a suitable library: https://github.com/TBD54566975/tbdex-protocol')
 })
 
+
+// This is just for example convenience. In the real world this would be discovered by other means.
 httpApi.api.get('/did', (req, res) => {
   res.send(config.did.id)
 })
 
+
+// A very low fi implementation of a credential issuer - will just check they are not sanctioned.
+// In the real world this would be done via OIDC4VC or similar.
+// In this case a check could be done on each transaction so a VC could be optional, but it makes the example richer to have it stored in the client (html) and sent with the RFQ.
 httpApi.api.get('/vc', async (req, res) => {
   const credentials = await requestCredential(req.query.name as string, req.query.country as string, req.query.did as string)
   res.send(credentials)
