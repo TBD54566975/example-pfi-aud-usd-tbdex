@@ -4,7 +4,48 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Payment Form</title>
-    <link href="https://unpkg.com/tailwindcss@^1.0/dist/tailwind.min.css" rel="stylesheet">    
+    <link href="https://unpkg.com/tailwindcss@^1.0/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Arial', sans-serif; /* Modern, sans-serif font */
+            background-color: #333; /* Dark background for contrast */
+            color: #fff; /* White text for readability */
+        }
+        .form-input, .form-input:focus {
+            background-color: #555; /* Darker elements for contrast */
+            border: none;
+            color: #fff;
+            box-shadow: none;
+        }
+        button {
+            background-color: #fa3e3e; /* Bright, bold color for your primary action */
+            color: #fff;
+            border: none;
+            box-shadow: 0 4px 14px 0 rgba(250, 62, 62, 0.39); /* Strong shadow for depth */
+        }
+        button:hover {
+            background-color: #dd2c2c; /* Slightly darker on hover for interactivity */
+        }
+        .enhanced-shadow {
+            box-shadow: 0 8px 16px 0 rgba(0, 0, 0, 0.2); /* More pronounced shadow */
+        }
+        .bg-gray-100 {
+            background-color: #444; /* Dark background for sections for contrast */
+            border: 1px solid #666; /* Defining borders for clarity */
+        }
+        .text-gray-700 {
+            color: #ddd; /* Lighter text within the dark sections */
+        }
+        .text-lg, .text-sm, label {
+            color: #fff; /* Ensuring all text is readable against the dark background */
+        }
+        .rounded-md {
+            border-radius: 0.375rem; /* Tailwind's default rounded value for consistency */
+        }
+        .shadow-md {
+            box-shadow: 0 6px 15px -2px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); /* Slightly enhanced shadow */
+        }
+    </style>
 </head>
 
 <body>

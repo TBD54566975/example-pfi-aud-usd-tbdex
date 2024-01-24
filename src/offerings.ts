@@ -8,7 +8,7 @@ const issuer = await fs.readFile('issuer-did.txt', 'utf-8')
 const offering = Offering.create({
   metadata: { from: config.did.id },
   data: {
-    description: 'rip off offering USD to AUD',
+    description: 'Totes legit USD to AUD liquidity node',
     payoutUnitsPerPayinUnit: '1.1', // ex. we send 100 dollars, so that means 110 AUD - clearly not a good price!
     payoutCurrency: { currencyCode: 'AUD' },
     payinCurrency: { currencyCode: 'USD' },
