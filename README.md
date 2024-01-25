@@ -11,6 +11,7 @@ This example will:
 See [index.html](src/didpay-client/index.html) for the client code and [main.ts](src/main.ts) for the liquidity node code (server).
 
 NOTE: this is not using market rates, or anything sensible, and is not intended to showcase all regulatory requirements that must be fulfilled. This is for illustrative purposes only, not production use.
+For a more general exemplar for a PFI liquidity node, please take a look at: https://github.com/TBD54566975/tbdex-pfi-exemplar/
 
 ![image](https://github.com/TBD54566975/example-pfi-aud-usd-tbdex/assets/14976/6db08cbb-c0f0-4881-a120-214c33a60443)
 
@@ -64,10 +65,10 @@ Each interaction happens in the context of an "Exchange" which is a record of th
 The business logic for the PFI is mainly in [main.ts](src/main.ts) and the offerings as specified in [offerings.ts](src/offerings.ts). Poke around!
 
 
-# DB stuff
-
 # Configuration
 Configuration can be set using environment variables. Defaults are set in `src/config.ts`
+
+
 
 # Project Resources
 
