@@ -44,9 +44,12 @@ const httpApi = new TbdexHttpServer({ exchangesApi: ExchangeRespository, offerin
 // provide the quote
 httpApi.submit('rfq', async (ctx, rfq: Rfq) => {
   await ExchangeRespository.addMessage({ message: rfq })
-
   const offering = await OfferingRepository.getOffering({ id: rfq.offeringId })
 
+  // rfq.payinSubunits is USD - but as a string, convert this to a decimal and multiple but our terrible exchange rate
+  // convert to a string, with 2 decimal places
+  const terribleExchangeRate = 1.1
+  const payout = (parseFloat(rfq.payinSubunits) * terribleExchangeRate).toFixed(2)
 
   if (rfq.payinMethod.kind == 'CREDIT_CARD' && offering.payinCurrency.currencyCode == 'USD' && offering.payoutCurrency.currencyCode == 'AUD' ) {
     const quote = Quote.create(
@@ -59,12 +62,12 @@ httpApi.submit('rfq', async (ctx, rfq: Rfq) => {
         data: {
           expiresAt: new Date(2028, 4, 1).toISOString(),
           payin: {
-            currencyCode: 'USDC',
-            amountSubunits: '100',
+            currencyCode: 'USD',
+            amountSubunits: rfq.payinSubunits,
           },
           payout: {
             currencyCode: 'AUD',
-            amountSubunits: '110'
+            amountSubunits: payout
           }
         }
       }
