@@ -10,7 +10,7 @@ This example will:
 
 See [index.html](src/didpay-client/index.html) for the client code and [main.ts](src/main.ts) for the liquidity node code (server).
 
-NOTE: this is not using market rates, or anything sensible, and is for illustrative purposes only, not production use.  
+NOTE: this is not using market rates, or anything sensible, and is not intended to showcase all regulatory requirements that must be fulfilled. This is for illustrative purposes only, not production use.
 
 ![image](https://github.com/TBD54566975/example-pfi-aud-usd-tbdex/assets/14976/6db08cbb-c0f0-4881-a120-214c33a60443)
 
