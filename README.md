@@ -2,7 +2,7 @@
 
 This is an example remittance PFI implementation using the tbdex protocol which uses a real payment API.
 
-This example will: 
+This example will:
 
 * Show a plain HTML and vanilla javascript client page that captures a credit card, creates a DID and requests a Verifiable Credential.
 * A server which does an "OFAC" check on the customer and issues a verifiable credential only if they are not on the OFAC list.
@@ -36,33 +36,41 @@ Once you have installed `nvm`, install the desired node version with `nvm instal
 Docker is used to spin up a local mysql container. Docker for Mac can be installed from [here](https://docs.docker.com/desktop/install/mac-install/)
 
 ## `dbmate`
-dbmate is used to run database migrations. Run `brew install dbmate` from your command line
+dbmate is used to run database migrations. follow install instructions for your OS: [here](https://github.com/amacneil/dbmate?tab=readme-ov-file#installation)
 
-# Preparing setup (one time)
+
+`npm run server` to check it runs.
+
+# Step 0: Setup server
+
+(this is a step you only need to do once).
 
 > 💡 Make sure you have all the [prerequisites](#development-prerequisites)
 
-1) run `cp .env.example .env`. This is where you can set any necessary environment variables. `.env.example` contains all environment variables that you _can_ set.
-2) Go to https://pinpayments.com/ and sign up to an account, then get a test api secret key, set it to `SEC_PIN_PAYMENTS_SECRET_KEY` either in .env or your local environment.
-3) Put the secret key in .env
+1) Go to [pin payments](https://pinpayments.com/) sign up and get a test api secret key, then `export SEC_PIN_PAYMENTS_SECRET_KEY=(secret key here)` (or you can use a .env file).
 
-`npm run server` to check it runs. 
+2) Setup the database:
 
-# Running end to end remittance flow
+run `/db/scripts/start-pg` from your command line to start a psql container by running.
+run `./db/scripts/migrate` to perform database migrations
+This only needs to be done once and then whenever changes are made in db/migrations.
+run `npm install` to install all project dependencies
 
-## Step 1: Run liquidity node  
+## Step 1: Run liquidity node (server)
 
-Run the server (or restart it) in another terminal window: 
+Run the server (or restart it) in another terminal window:
 
 `npm run server`
 
-## Step 2: Open `src/didpay-client/index.html` in a browser
+## Step 2: Run client app (browser)
 
-Each interaction happens in the context of an "Exchange" which is a record of the interaction between the customer and the PFI.
+Open `src/didpay-client/index.html` in a browser and try it out!
 
 # Implementing a PFI
 
 The business logic for the PFI is mainly in [main.ts](src/main.ts) and the offerings as specified in [offerings.ts](src/offerings.ts). Poke around!
+
+Each interaction happens in the context of an "Exchange" which is a record of the interaction between the customer and the PFI.
 
 
 # Configuration
@@ -81,4 +89,3 @@ Configuration can be set using environment variables. Defaults are set in `src/c
 | [LICENSE](./LICENSE)                       | Apache License, Version 2.0                                                    |
 
 <img width="400" alt="Screenshot 2023-11-25 at 8 48 29 am" src="https://github.com/TBD54566975/example-aud-usd-pfi/assets/14976/2f86b963-b63e-4f68-a277-a0b5882d7385">
-
