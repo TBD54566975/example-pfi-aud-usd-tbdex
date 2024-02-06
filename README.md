@@ -41,7 +41,7 @@ dbmate is used to run database migrations. follow install instructions for your 
 
 `npm run server` to check it runs.
 
-# Step 0: Setup server
+## Step 0: Setup server
 
 (this is a step you only need to do once).
 
@@ -51,10 +51,12 @@ dbmate is used to run database migrations. follow install instructions for your 
 
 2) Setup the database:
 
-run `/db/scripts/start-pg` from your command line to start a psql container by running.
-run `./db/scripts/migrate` to perform database migrations
-This only needs to be done once and then whenever changes are made in db/migrations.
-run `npm install` to install all project dependencies
+* run `/db/scripts/start-pg` from your command line to start a psql container.
+
+* run `./db/scripts/migrate` to perform database migrations.
+(This only needs to be done once and then whenever changes are made in db/migrations)
+
+* run `npm install` to install all project dependencies
 
 ## Step 1: Run liquidity node (server)
 
