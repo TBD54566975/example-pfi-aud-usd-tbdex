@@ -39,8 +39,6 @@ Docker is used to spin up a local mysql container. Docker for Mac can be install
 dbmate is used to run database migrations. follow install instructions for your OS: [here](https://github.com/amacneil/dbmate?tab=readme-ov-file#installation)
 
 
-`npm run server` to check it runs.
-
 ## Step 0: Setup server
 
 (this is a step you only need to do once).
@@ -51,7 +49,7 @@ dbmate is used to run database migrations. follow install instructions for your 
 
 2) Setup the database:
 
-* run `/db/scripts/start-pg` from your command line to start a psql container.
+* run `./db/scripts/start-pg` from your command line to start a psql container.
 
 * run `./db/scripts/migrate` to perform database migrations.
 (This only needs to be done once and then whenever changes are made in db/migrations)
