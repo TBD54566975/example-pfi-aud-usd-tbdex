@@ -1,9 +1,9 @@
-import type { Database } from './types.js'
-import * as mysql2 from 'mysql2'
+import type { Database } from "./types.js";
+import * as mysql2 from "mysql2";
 
-import log from '../logger.js'
-import { Kysely, MysqlDialect } from 'kysely'
-import { config } from '../config.js'
+import log from "../logger.js";
+import { Kysely, MysqlDialect } from "kysely";
+import { config } from "../config.js";
 
 // export class MysqlClient {
 //   pool: mysql2.Pool

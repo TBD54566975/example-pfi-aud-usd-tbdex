@@ -1,148 +1,180 @@
-import type { Close, MessageKind, MessageKindClass, Order, OrderStatus, Quote, ExchangesApi, Rfq, GetExchangesFilter, MessageModel } from '@tbdex/http-server'
-import { Message } from '@tbdex/http-server'
+import type {
+  Close,
+  Message,
+  Order,
+  OrderStatus,
+  Quote,
+  ExchangesApi,
+  Rfq,
+  GetExchangesFilter,
+  MessageModel,
+  MessageKind,
+} from "@tbdex/http-server";
+import { Parser } from "@tbdex/http-server";
 
-import { Postgres } from './postgres.js'
+import { Postgres } from "./postgres.js";
 
-await Postgres.connect()
+await Postgres.connect();
 // await Postgres.ping()
-await Postgres.clear()
-
+await Postgres.clear();
 
 class _ExchangeRepository implements ExchangesApi {
-  getExchanges(opts: { filter: GetExchangesFilter }): Promise<MessageKindClass[][]> {
-    // TODO: try out GROUP BY! would do it now, just unsure what the return structure looks like
-    const promises: Promise<MessageKindClass[]>[] = []
-    const exchangeIds = []
-
-    if (opts.filter && Array.isArray(opts.filter.id)) {
-      exchangeIds.push(...opts.filter.id)
-    }
+  async getExchanges(opts: {
+    filter: GetExchangesFilter;
+  }): Promise<Message[][]> {
+    const exchangeIds = opts.filter.id?.length ? opts.filter.id : [];
 
     if (exchangeIds.length == 0) {
-      return this.getAllExchanges()
+      return await this.getAllExchanges();
     }
 
+    const exchanges: Message[][] = [];
     for (let id of exchangeIds) {
-      console.log('calling id', id)
-      // TODO: handle error property
-      const promise = this.getExchange({ id }).catch(_e => [])
-      promises.push(promise)
+      console.log("calling id", id);
+      const exchange = await this.getExchange({ id }).catch((_e) => []);
+      exchanges.push(exchange);
     }
 
-    return Promise.all(promises)
+    return exchanges;
   }
 
-  async getAllExchanges(): Promise<MessageKindClass[][]> {
+  async getAllExchanges(): Promise<Message[][]> {
+    const results = await Postgres.client
+      .selectFrom("exchange")
+      .select(["message"])
+      .orderBy("createdat", "asc")
+      .execute();
 
-    const results = await Postgres.client.selectFrom('exchange')
-      .select(['message', 'exchangeid'])
-      .orderBy('createdat', 'asc')
-      .execute()
-
-    const exchanges = this.groupMessagesByExchangeId(results)
-
-    return Object.values(exchanges)
+    return await this.composeMessages(results);
   }
 
-  async getExchange(opts: { id: string }): Promise<MessageKindClass[]> {
-    console.log('getting exchange for id', opts.id)
-    const results = await Postgres.client.selectFrom('exchange')
-      .select(['message', 'exchangeid'])
-      .where(eb => eb.and({
-        exchangeid: opts.id,
-      }))
-      .orderBy('createdat', 'asc')
-      .execute()
+  async getExchange(opts: { id: string }): Promise<Message[]> {
+    console.log("getting exchange for id", opts.id);
+    const results = await Postgres.client
+      .selectFrom("exchange")
+      .select(["message"])
+      .where((eb) =>
+        eb.and({
+          exchangeid: opts.id,
+        }),
+      )
+      .orderBy("createdat", "asc")
+      .execute();
 
-    const messages = this.groupMessagesByExchangeId(results)
-
-    return Object.values(messages)[0]
+    return (await this.composeMessages(results))[0] ?? [];
   }
 
-  private groupMessagesByExchangeId(results: { message: MessageModel<MessageKind>, exchangeid: string }[]): Record<string, MessageKindClass[]> {
-    const exchangeIdToMessages = {}
+  private async composeMessages(
+    results: { message: MessageModel }[],
+  ): Promise<Message[][]> {
+    const exchangeIdsToMessages: { [key: string]: Message[] } = {};
 
     for (let result of results) {
-      const message = Message.fromJson(result.message)
-
-      if (!exchangeIdToMessages[result.exchangeid]) {
-        exchangeIdToMessages[result.exchangeid] = []
+      const message = await Parser.parseMessage(result.message);
+      const exchangeId = message.metadata.exchangeId;
+      if (exchangeIdsToMessages[exchangeId]) {
+        exchangeIdsToMessages[exchangeId].push(message);
+      } else {
+        exchangeIdsToMessages[exchangeId] = [message];
       }
-
-      exchangeIdToMessages[result.exchangeid].push(message)
     }
 
-    return exchangeIdToMessages
+    return Object.values(exchangeIdsToMessages);
   }
 
   async getRfq(opts: { exchangeId: string }): Promise<Rfq> {
-    return await this.getMessage({ exchangeId: opts.exchangeId, messageKind: 'rfq' }) as Rfq
+    return (await this.getMessage({
+      exchangeId: opts.exchangeId,
+      messageKind: "rfq",
+    })) as Rfq;
   }
 
   async getQuote(opts: { exchangeId: string }): Promise<Quote> {
-    return await this.getMessage({ exchangeId: opts.exchangeId, messageKind: 'quote' }) as Quote
+    return (await this.getMessage({
+      exchangeId: opts.exchangeId,
+      messageKind: "quote",
+    })) as Quote;
   }
 
   async getOrder(opts: { exchangeId: string }): Promise<Order> {
-    return await this.getMessage({ exchangeId: opts.exchangeId, messageKind: 'order' }) as Order
+    return (await this.getMessage({
+      exchangeId: opts.exchangeId,
+      messageKind: "order",
+    })) as Order;
   }
 
   async getOrderStatuses(opts: { exchangeId: string }): Promise<OrderStatus[]> {
-    const results = await Postgres.client.selectFrom('exchange')
-      .select(['message'])
-      .where(eb => eb.and({
-        exchangeid: opts.exchangeId,
-        messagekind: 'orderstatus'
-      }))
-      .execute()
+    const results = await Postgres.client
+      .selectFrom("exchange")
+      .select(["message"])
+      .where((eb) =>
+        eb.and({
+          exchangeid: opts.exchangeId,
+          messagekind: "orderstatus",
+        }),
+      )
+      .execute();
 
-    const orderStatuses: OrderStatus[] = []
+    const orderStatuses: OrderStatus[] = [];
 
     for (let result of results) {
-      const orderStatus = Message.fromJson(result.message) as OrderStatus
-      orderStatuses.push(orderStatus)
+      const orderStatus = (await Parser.parseMessage(
+        result.message,
+      )) as OrderStatus;
+      orderStatuses.push(orderStatus);
     }
 
-    return orderStatuses
+    return orderStatuses;
   }
 
   async getClose(opts: { exchangeId: string }): Promise<Close> {
-    return await this.getMessage({ exchangeId: opts.exchangeId, messageKind: 'order' }) as Close
+    return (await this.getMessage({
+      exchangeId: opts.exchangeId,
+      messageKind: "close",
+    })) as Close;
   }
 
-  async getMessage(opts: { exchangeId: string, messageKind: MessageKind }) {
-    const result = await Postgres.client.selectFrom('exchange')
-      .select(['message'])
-      .where(eb => eb.and({
-        exchangeid: opts.exchangeId,
-        messagekind: opts.messageKind
-      }))
+  async getMessage(opts: { exchangeId: string; messageKind: MessageKind }) {
+    const result = await Postgres.client
+      .selectFrom("exchange")
+      .select(["message"])
+      .where((eb) =>
+        eb.and({
+          exchangeid: opts.exchangeId,
+          messagekind: opts.messageKind,
+        }),
+      )
       .limit(1)
-      .executeTakeFirst()
+      .executeTakeFirst();
 
     if (result) {
-      return Message.fromJson(result.message)
+      return await Parser.parseMessage(result.message);
     }
   }
 
-  async addMessage(opts: { message: MessageKindClass }) {
-    const { message } = opts
-    const subject = aliceMessageKinds.has(message.kind) ? message.from : message.to
+  async addMessage(opts: { message: Message }) {
+    const { message } = opts;
+    const subject = aliceMessageKinds.has(message.kind)
+      ? message.metadata.from
+      : message.metadata.to;
 
-    const result = await Postgres.client.insertInto('exchange')
+    const result = await Postgres.client
+      .insertInto("exchange")
       .values({
-        exchangeid: message.exchangeId,
+        exchangeid: message.metadata.exchangeId,
         messagekind: message.kind,
         messageid: message.id,
         subject,
-        message: JSON.stringify(message)
+        message: JSON.stringify(message),
       })
-      .execute()
+      .execute();
 
-    console.log(`Add ${message.kind} Message Result: ${JSON.stringify(result, null, 2)}`)
+    console.log(
+      `Add ${message.kind} Message Result: ${JSON.stringify(result, null, 2)}`,
+    );
   }
 }
 
-const aliceMessageKinds = new Set(['rfq', 'order'])
+const aliceMessageKinds = new Set(["rfq", "order"]);
 
-export const ExchangeRespository = new _ExchangeRepository()
+export const ExchangeRespository = new _ExchangeRepository();

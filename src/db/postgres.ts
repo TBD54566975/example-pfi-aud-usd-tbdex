@@ -23,31 +23,6 @@ export class PostgresClient {
   }
 
   /**
-     * pings mysql to test connection
-     */
-  // async ping() {
-  //   return new Promise<void>((resolve, reject) => {
-  //     log.info('connecting to posgres..')
-
-  //     this.pool.getConnection((err, conn) => {
-  //       if (err) {
-  //         return reject(err)
-  //       }
-
-  //       log.info('mysql connection established! pinging mysql...')
-
-  //       conn.query('select 1+1 as test', (err) => {
-  //         if (err) {
-  //           return reject(err)
-  //         } else {
-  //           log.info('pong!')
-  //           return resolve()
-  //         }
-  //       })
-  //     })
-  //   })
-  // }
-  /**
      * closes all connections to mysql
      */
   close() {
