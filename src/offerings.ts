@@ -14,13 +14,41 @@ const offering = Offering.create({
     payinCurrency: { currencyCode: "USD" },
     payinMethods: [
       {
-        kind: "USD_LEDGER",
-        requiredPaymentDetails: {},
+        kind: "CREDIT_CARD",
+        requiredPaymentDetails: {
+          $schema: "http://json-schema.org/draft-07/schema#",
+          title: "Credit Card",
+          type: "object",
+          required: ["cc_number", "expiry_month", "expiry_year", "cvc", "name"],
+          additionalProperties: false,
+          properties: {
+            cc_number: {
+              title: "credit card number",
+              type: "string",
+            },
+            expiry_month: {
+              title: "month of expiry",
+              type: "string",
+            },
+            expiry_year: {
+              title: "year of expiry",
+              type: "string",
+            },
+            cvc: {
+              title: "security digits",
+              type: "string",
+            },
+            name: {
+              title: "name on card",
+              type: "string",
+            },
+          },
+        },
       },
     ],
     payoutMethods: [
       {
-        kind: "BANK_FIRSTBANK",
+        kind: "AUSTRALIAN_BANK_ACCOUNT",
         requiredPaymentDetails: {
           $schema: "http://json-schema.org/draft-07/schema#",
           title: "Australian Bank Account Required Payment Details",

@@ -45,6 +45,7 @@ const httpApi = new TbdexHttpServer({
 
 // provide the quote
 httpApi.onSubmitRfq(async (ctx, rfq: Rfq) => {
+  console.log("RFQ");
   await ExchangeRespository.addMessage({ message: rfq });
   const offering = await OfferingRepository.getOffering({
     id: rfq.data.offeringId,
@@ -100,6 +101,9 @@ httpApi.onSubmitOrder(async (ctx, order: Order) => {
     exchangeId: order.exchangeId,
   });
 
+  const payinAmount =
+    "" + Math.round(parseFloat(quote.data.payin.amount) * 100);
+
   let response = await fetch("https://test-api.pinpayments.com/1/charges", {
     method: "POST",
     headers: {
@@ -108,7 +112,7 @@ httpApi.onSubmitOrder(async (ctx, order: Order) => {
       "Content-Type": "application/x-www-form-urlencoded",
     },
     body: new URLSearchParams({
-      amount: quote.data.payin.amount,
+      amount: payinAmount,
       currency: "USD",
       description: "For remittances",
       ip_address: "203.192.1.172",
@@ -172,6 +176,13 @@ httpApi.onSubmitOrder(async (ctx, order: Order) => {
 
   await updateOrderStatus(rfq, "TRANSFERING_FUNDS");
 
+  // multiply payout by 100 for API and make it an integer
+  // payout is in AUD cents
+  //
+  // convert quote.data.payout.amount to a decimal
+  const payoutAmount =
+    "" + Math.round(parseFloat(quote.data.payout.amount) * 100);
+
   response = await fetch("https://test-api.pinpayments.com/1/transfers", {
     method: "POST",
     headers: {
@@ -180,7 +191,7 @@ httpApi.onSubmitOrder(async (ctx, order: Order) => {
       "Content-Type": "application/x-www-form-urlencoded",
     },
     body: new URLSearchParams({
-      amount: quote.data.payout.amount,
+      amount: payoutAmount,
       currency: quote.data.payout.currencyCode,
       description: "For remittances",
       recipient: recipientToken,

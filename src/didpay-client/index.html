@@ -245,6 +245,7 @@
                                     type="number"
                                     id="transferAmount"
                                     placeholder="Enter amount"
+                                    value="42.42"
                                 />
                             </div>
                         </fieldset>
@@ -307,7 +308,7 @@
         const pfiDid = await fetch("http://localhost:9000/did").then((r) =>
             r.text(),
         );
-        console.log(pfiDid);
+        console.log("pfi did", pfiDid);
 
         // load the offerings from the PFI
         const offerings = await TbdexHttpClient.getOfferings({
@@ -395,31 +396,35 @@
             });
 
             await rfq.sign(did);
-            const resp = await TbdexHttpClient.sendMessage({
+
+            await TbdexHttpClient.sendMessage({
                 message: rfq,
                 replyTo: did.uri,
             });
-            // asser that the response is a success
-            console.log("send rfq response", JSON.stringify(resp, null, 2));
+            console.log("sent RFQ: ", JSON.stringify(rfq, null, 2));
 
+            //
+            //
             // All interaction with the PFI happens in the context of an exchange.
+            // This is where for example a quote would show up in result to an RFQ:
             const exchanges = await TbdexHttpClient.getExchanges({
                 pfiDid: pfiDid,
+                did: did,
                 filter: { id: rfq.exchangeId },
-                did,
             });
-            const [exchange] = exchanges.data;
 
+            console.log("got exchanges:", JSON.stringify(exchanges, null, 2));
+            const [exchange] = exchanges;
             // find the quote
             const quote = exchange.find((message) => message instanceof Quote);
-
+            console.log("quote", quote);
             // show the quote on the page
             const quoteContainer = document.getElementById("quoteContainer");
             const quoteElement = document.createElement("div");
             quoteElement.className =
                 "bg-gray-100 p-4 rounded-md shadow-sm mb-5";
             const quoteText = document.createElement("p");
-            quoteText.textContent = `Pay recipient \$${quote.data.payout.amountSubunits} ${quote.data.payout.currencyCode} Australian Dollars.`;
+            quoteText.textContent = `Pay recipient \$${quote.data.payout.amount} ${quote.data.payout.currencyCode}.`;
             quoteElement.appendChild(quoteText);
             quoteContainer.appendChild(quoteElement);
 
@@ -433,7 +438,7 @@
 
                 const order = Order.create({
                     metadata: {
-                        from: did.did,
+                        from: did.uri,
                         to: pfiDid,
                         exchangeId: quote.exchangeId,
                     },
@@ -456,7 +461,7 @@
                         filter: { id: rfq.exchangeId },
                         did,
                     });
-                    const [exchange] = exchanges.data;
+                    const [exchange] = exchanges;
                     // find the quote
                     const close = exchange.find(
                         (message) => message instanceof Close,
