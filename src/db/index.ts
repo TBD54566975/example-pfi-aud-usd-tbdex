@@ -1,2 +1,2 @@
-export * from './exchange-repository.js'
-export * from './postgres.js'
+export * from "./exchange-repository.js";
+export * from "./postgres.js";
