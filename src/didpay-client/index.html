@@ -279,25 +279,11 @@
             Order,
             Close,
             OrderStatus,
-        } from "https://cdn.jsdelivr.net/npm/@tbdex/http-client@0.26.0/dist/browser.mjs";
+        } from "https://cdn.jsdelivr.net/npm/@tbdex/http-client@0.26.1/dist/browser.mjs";
         console.log(TbdexHttpClient);
 
         async function createOrLoadDid() {
             return await DevTools.createDid();
-            try {
-                // Check if the DID exists in local storage
-                const data = localStorage.getItem("did");
-                if (data) {
-                    return JSON.parse(data);
-                } else {
-                    // If the DID doesn't exist, generate a new DID
-                    const did = await DevTools.createDid();
-                    localStorage.setItem("did", JSON.stringify(did));
-                    return did;
-                }
-            } catch (error) {
-                console.error("Error with Local Storage:", error);
-            }
         }
 
         // create or load the customer did
@@ -403,18 +389,26 @@
             });
             console.log("sent RFQ: ", JSON.stringify(rfq, null, 2));
 
+
+            const exchanges = await TbdexHttpClient.getExchanges({
+                pfiDid: pfiDid,
+                did: did,
+            });
+
+            console.log(exchanges)
+
             //
             //
             // All interaction with the PFI happens in the context of an exchange.
             // This is where for example a quote would show up in result to an RFQ:
-            const exchanges = await TbdexHttpClient.getExchanges({
+            const exchange = await TbdexHttpClient.getExchange({
                 pfiDid: pfiDid,
                 did: did,
-                filter: { id: rfq.exchangeId },
+                exchangeId: rfq.exchangeId,
             });
 
-            console.log("got exchanges:", JSON.stringify(exchanges, null, 2));
-            const [exchange] = exchanges;
+            console.log("got exchange:", JSON.stringify(exchange, null, 2));
+            
             // find the quote
             const quote = exchange.find((message) => message instanceof Quote);
             console.log("quote", quote);
