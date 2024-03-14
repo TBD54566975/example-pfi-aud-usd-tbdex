@@ -10,6 +10,8 @@ import { Postgres, ExchangeRespository } from './db/index.js'
 import { HttpServerShutdownHandler } from './http-shutdown-handler.js'
 import { TbdexHttpServer } from '@tbdex/http-server'
 import { requestCredential } from './credential-issuer.js'
+import { NextFunction } from 'express-serve-static-core'
+import { HttpError } from 'http-errors'
 
 console.log('PFI DID: ', config.pfiDid.uri)
 
@@ -42,6 +44,33 @@ const httpApi = new TbdexHttpServer({
   offeringsApi: OfferingRepository,
   pfiDid: config.pfiDid.uri,
 })
+
+
+function snooper() {
+  return function(req: Request, res: Response, next: NextFunction) {
+    console.log('snooper' + req.url)
+    return next()
+  }
+}
+httpApi.api.use(snooper())
+
+// TODO: Remove this when spec clarified if should post to /exchanges... or exchanges.../rfq
+function redirectPostToRfq() {
+  return function(req, res, next) {
+    // Check if the request is a POST to /exchanges/:exchangeId
+    if (req.method === 'POST' && req.url.match(/^\/exchanges\/\w+$/)) {
+      // Modify the request URL to redirect to /exchanges/:exchangeId/rfq
+      req.url = req.url + '/rfq'
+      console.log('Redirected: ' + req.url)
+    }
+    // Proceed to the next middleware
+    return next()
+  }
+}
+
+httpApi.api.use(redirectPostToRfq())
+
+
 
 // provide the quote
 httpApi.onSubmitRfq(async (ctx, rfq: Rfq) => {
