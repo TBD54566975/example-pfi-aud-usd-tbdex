@@ -273,35 +273,18 @@
     <script type="module">
         import {
             TbdexHttpClient,
-            DevTools,
             Rfq,
             Quote,
             Order,
             Close,
             OrderStatus,
-        } from "https://cdn.jsdelivr.net/npm/@tbdex/http-client@0.26.0/dist/browser.mjs";
+        } from "https://cdn.jsdelivr.net/npm/@tbdex/http-client@1.0.0/dist/browser.mjs";
+
+        import { DidDht } from "https://cdn.jsdelivr.net/npm/@web5/dids@1.0.0/dist/browser.mjs";
         console.log(TbdexHttpClient);
-
-        async function createOrLoadDid() {
-            return await DevTools.createDid();
-            try {
-                // Check if the DID exists in local storage
-                const data = localStorage.getItem("did");
-                if (data) {
-                    return JSON.parse(data);
-                } else {
-                    // If the DID doesn't exist, generate a new DID
-                    const did = await DevTools.createDid();
-                    localStorage.setItem("did", JSON.stringify(did));
-                    return did;
-                }
-            } catch (error) {
-                console.error("Error with Local Storage:", error);
-            }
-        }
-
-        // create or load the customer did
-        const did = await createOrLoadDid();
+        
+        // create a did for the customer "wallet"
+        const did = await DidDht.create();
         console.log("customer id", did.did);
 
         // load the PFI (liquidity node) did from http://localhost:9000/did
@@ -319,6 +302,7 @@
 
         // show the offerings on the page
         async function showOfferings(data) {
+            console.log(data)
             const offeringsContainer =
                 document.getElementById("offeringsContainer");
             data.forEach((offering) => {
@@ -337,11 +321,11 @@
                 offeringElement.appendChild(description);
 
                 const payoutCurrency = document.createElement("p");
-                payoutCurrency.textContent = `Payout Currency: ${offering.data.payoutCurrency.currencyCode}`;
+                payoutCurrency.textContent = `Payout Currency: ${offering.data.payout.currencyCode}`;
                 offeringElement.appendChild(payoutCurrency);
 
                 const payinMethods = document.createElement("p");
-                payinMethods.textContent = `Pay-in Methods: ${offering.data.payinMethods.map((m) => m.kind).join(", ")}`;
+                payinMethods.textContent = `Pay-in Methods: ${offering.data.payin.methods.map((m) => m.kind).join(", ")}`;
                 offeringElement.appendChild(payinMethods);
 
                 offeringsContainer.appendChild(offeringElement);
