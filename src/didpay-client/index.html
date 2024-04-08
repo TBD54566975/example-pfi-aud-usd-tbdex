@@ -337,7 +337,7 @@
         // Function to get Verifiable Credential
         async function getVerifiableCredential(name) {
             return await fetch(
-                `http://localhost:9000/vc?name=${name}&country=Australia&did=${did.id}`,
+                `http://localhost:9000/vc?name=${name}&country=Australia&did=${did.uri}`,
             ).then((r) => r.text());
         }
 
@@ -351,11 +351,13 @@
             const transferAmount =
                 document.getElementById("transferAmount").value; // Get the transfer amount from the form
             const rfq = Rfq.create({
-                metadata: { from: did.uri, to: pfiDid },
+                metadata: { from: did.uri, 
+                            to: offerings[0].metadata.from,
+                            protocol: "1.0" },
                 data: {
-                    offeringId: offerings[0].id,
-                    payinAmount: transferAmount,
-                    payinMethod: {
+                    offeringId: offerings[0].metadata.id,
+                    payin: {
+                        amount: transferAmount,
                         kind: "CREDIT_CARD",
                         paymentDetails: {
                             cc_number: document.getElementById("number").value,
@@ -367,7 +369,7 @@
                             name: document.getElementById("name").value,
                         },
                     },
-                    payoutMethod: {
+                    payout: {
                         kind: "AUSTRALIAN_BANK_ACCOUNT",
                         paymentDetails: {
                             accountNumber: "987654321", // replace with actual account number
@@ -381,26 +383,30 @@
 
             await rfq.sign(did);
 
-            await TbdexHttpClient.sendMessage({
-                message: rfq,
-                replyTo: did.uri,
-            });
+            await TbdexHttpClient.createExchange(
+                rfq,
+            );
             console.log("sent RFQ: ", JSON.stringify(rfq, null, 2));
 
-            //
-            //
-            // All interaction with the PFI happens in the context of an exchange.
-            // This is where for example a quote would show up in result to an RFQ:
-            const exchanges = await TbdexHttpClient.getExchanges({
-                pfiDid: pfiDid,
-                did: did,
-                filter: { id: rfq.exchangeId },
-            });
+            let quote;
 
-            console.log("got exchanges:", JSON.stringify(exchanges, null, 2));
-            const [exchange] = exchanges;
-            // find the quote
-            const quote = exchange.find((message) => message instanceof Quote);
+            //Wait for Quote message to appear in the exchange
+            while (!quote) {
+                console.log("rfq", rfq)
+                const exchange = await TbdexHttpClient.getExchange({
+                    pfiDid: pfiDid,
+                    did: did,
+                    exchangeId: rfq.exchangeId
+                });
+
+                quote = exchange.find(msg => msg instanceof Quote);
+
+                if (!quote) {
+                    // Wait 2 seconds before making another request
+                    await new Promise(resolve => setTimeout(resolve, 2000));
+                }
+            }
+
             console.log("quote", quote);
             // show the quote on the page
             const quoteContainer = document.getElementById("quoteContainer");

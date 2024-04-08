@@ -17,6 +17,8 @@ export class InMemoryExchangesApi implements ExchangesApi {
   }
 
   async getExchanges(opts?: { filter: GetExchangesFilter }): Promise<Exchange[]> {
+
+    console.log('exchanges', opts.filter.id)
     if (opts === undefined || opts.filter === undefined) {
       // In production, this should probably return an empty list.
       // For example and testing purposes, we return all exchanges.
@@ -49,7 +51,9 @@ export class InMemoryExchangesApi implements ExchangesApi {
   }
 
   async getExchange(opts: { id: string} ): Promise<Exchange | undefined> {
+    console.log('get exchange', opts.id)
     const exchange = this.exchangeMessagesMap.get(opts.id)
+    console.log('exchange', exchange)
     return Promise.resolve(exchange)
   }
 

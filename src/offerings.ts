@@ -8,6 +8,7 @@ const issuer = await fs.readFile('issuer-did.txt', 'utf-8')
 const offering = Offering.create({
   metadata: {
     from: config.pfiDid.uri,
+    protocol: '1.0'
   },
   data: {
     description: 'Totes legit USD to AUD liquidity node',
@@ -112,6 +113,7 @@ const offering = Offering.create({
 })
 
 await offering.sign(config.pfiDid)
+offering.validate()
 
 // Initialize an array of hardcoded offerings
 const hardcodedOfferings: Offering[] = []
