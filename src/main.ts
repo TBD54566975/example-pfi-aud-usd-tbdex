@@ -6,12 +6,12 @@ import { Quote, OrderStatus, Close } from '@tbdex/http-server'
 
 import log from './logger.js'
 import { config } from './config.js'
-import { Postgres, ExchangeRespository } from './db/index.js'
+
 import { HttpServerShutdownHandler } from './http-shutdown-handler.js'
 import { TbdexHttpServer } from '@tbdex/http-server'
 import { requestCredential } from './credential-issuer.js'
 import { NextFunction } from 'express-serve-static-core'
-import { HttpError } from 'http-errors'
+import { InMemoryExchangesApi } from './exchanges.js'
 
 console.log('PFI DID: ', config.pfiDid.uri)
 
@@ -39,8 +39,10 @@ process.on('SIGTERM', async () => {
   gracefulShutdown()
 })
 
+const ExchangeRepository = new InMemoryExchangesApi()
+
 const httpApi = new TbdexHttpServer({
-  exchangesApi: ExchangeRespository,
+  exchangesApi: ExchangeRepository,
   offeringsApi: OfferingRepository,
   pfiDid: config.pfiDid.uri,
 })
@@ -73,9 +75,9 @@ httpApi.api.use(redirectPostToRfq())
 
 
 // provide the quote
-httpApi.onSubmitRfq(async (ctx, rfq: Rfq) => {
+httpApi.onCreateExchange(async (ctx, rfq: Rfq) => {
   console.log('RFQ')
-  await ExchangeRespository.addMessage({ message: rfq })
+  await ExchangeRepository.addMessage(rfq)
   const offering = await OfferingRepository.getOffering({
     id: rfq.data.offeringId,
   })
@@ -84,13 +86,13 @@ httpApi.onSubmitRfq(async (ctx, rfq: Rfq) => {
   // convert to a string, with 2 decimal places
   const terribleExchangeRate = 1.1
   const payout = (
-    parseFloat(rfq.data.payinAmount) * terribleExchangeRate
+    parseFloat(rfq.data.payin.amount) * terribleExchangeRate
   ).toFixed(2)
 
   if (
-    rfq.data.payinMethod.kind == 'CREDIT_CARD' &&
-    offering.data.payinCurrency.currencyCode == 'USD' &&
-    offering.data.payoutCurrency.currencyCode == 'AUD'
+    rfq.data.payin.kind == 'CREDIT_CARD' &&
+    offering.data.payin.currencyCode == 'USD' &&
+    offering.data.payout.currencyCode == 'AUD'
   ) {
     const quote = Quote.create({
       metadata: {
@@ -102,7 +104,7 @@ httpApi.onSubmitRfq(async (ctx, rfq: Rfq) => {
         expiresAt: new Date(2028, 4, 1).toISOString(),
         payin: {
           currencyCode: 'USD',
-          amount: rfq.data.payinAmount,
+          amount: rfq.data.payin.amount,
         },
         payout: {
           currencyCode: 'AUD',
@@ -111,22 +113,22 @@ httpApi.onSubmitRfq(async (ctx, rfq: Rfq) => {
       },
     })
     await quote.sign(config.pfiDid)
-    await ExchangeRespository.addMessage({ message: quote as Quote })
+    await ExchangeRepository.addMessage(quote)
   }
 })
 
 // When the customer accepts the order
 httpApi.onSubmitOrder(async (ctx, order: Order) => {
   console.log('order requested')
-  await ExchangeRespository.addMessage({ message: order })
+  await ExchangeRepository.addMessage(order)
 
   // first we will charge the card
   // then we will send the money to the bank account
 
-  const quote = await ExchangeRespository.getQuote({
+  const quote = await ExchangeRepository.getQuote({
     exchangeId: order.exchangeId,
   })
-  const rfq = await ExchangeRespository.getRfq({
+  const rfq = await ExchangeRepository.getRfq({
     exchangeId: order.exchangeId,
   })
 
@@ -146,11 +148,11 @@ httpApi.onSubmitOrder(async (ctx, order: Order) => {
       description: 'For remittances',
       ip_address: '203.192.1.172',
       email: 'test@testing.com',
-      'card[number]': rfq.data.payinMethod.paymentDetails['cc_number'],
-      'card[expiry_month]': rfq.data.payinMethod.paymentDetails['expiry_month'],
-      'card[expiry_year]': rfq.data.payinMethod.paymentDetails['expiry_year'],
-      'card[cvc]': rfq.data.payinMethod.paymentDetails['cvc'],
-      'card[name]': rfq.data.payinMethod.paymentDetails['name'],
+      'card[number]': rfq.data.payin.paymentDetailsHash['cc_number'],
+      'card[expiry_month]': rfq.data.payin.paymentDetailsHash['expiry_month'],
+      'card[expiry_year]': rfq.data.payin.paymentDetailsHash['expiry_year'],
+      'card[cvc]': rfq.data.payin.paymentDetailsHash['cvc'],
+      'card[name]': rfq.data.payin.paymentDetailsHash['name'],
       'card[address_line1]': 'Nunya',
       'card[address_city]': 'Bidnis',
       'card[address_country]': 'USA',
@@ -182,10 +184,10 @@ httpApi.onSubmitOrder(async (ctx, order: Order) => {
     body: new URLSearchParams({
       email: 'roland@pinpayments.com',
       name: 'Mr Roland Robot',
-      'bank_account[name]': rfq.data.payoutMethod.paymentDetails['accountName'],
-      'bank_account[bsb]': rfq.data.payoutMethod.paymentDetails['bsbNumber'],
+      'bank_account[name]': rfq.data.payout.paymentDetailsHash['accountName'],
+      'bank_account[bsb]': rfq.data.payout.paymentDetailsHash['bsbNumber'],
       'bank_account[number]':
-        rfq.data.payoutMethod.paymentDetails['accountNumber'],
+        rfq.data.payout.paymentDetailsHash['accountNumber'],
     }),
   })
 
@@ -242,7 +244,7 @@ httpApi.onSubmitOrder(async (ctx, order: Order) => {
 })
 
 httpApi.onSubmitClose(async (ctx, close) => {
-  await ExchangeRespository.addMessage({ message: close as Close })
+  await ExchangeRepository.addMessage(close)
 })
 
 const server = httpApi.listen(config.port, () => {
@@ -277,10 +279,6 @@ const httpServerShutdownHandler = new HttpServerShutdownHandler(server)
 function gracefulShutdown() {
   httpServerShutdownHandler.stop(async () => {
     log.info('http server stopped.')
-
-    log.info('closing Postgres connections')
-    await Postgres.close()
-
     process.exit(0)
   })
 }
@@ -301,7 +299,7 @@ async function updateOrderStatus(rfq: Rfq, status: string) {
     },
   })
   await orderStatus.sign(config.pfiDid)
-  await ExchangeRespository.addMessage({ message: orderStatus as OrderStatus })
+  await ExchangeRepository.addMessage(orderStatus)
 }
 
 async function close(rfq: Rfq, reason: string) {
@@ -318,5 +316,5 @@ async function close(rfq: Rfq, reason: string) {
     },
   })
   await close.sign(config.pfiDid)
-  await ExchangeRespository.addMessage({ message: close })
+  await ExchangeRepository.addMessage(close)
 }
