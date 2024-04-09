@@ -1,6 +1,7 @@
 import { OfferingsApi, Offering } from '@tbdex/http-server'
 import { config } from './config.js'
 import fs from 'fs/promises'
+import { PresentationExchange } from '@web5/credentials'
 
 // load issuer's did from a file called issuer-did.txt
 const issuer = await fs.readFile('issuer-did.txt', 'utf-8')
@@ -85,9 +86,18 @@ const offering = Offering.create({
     },
     requiredClaims: {
       id: '7ce4004c-3c38-4853-968b-e411bafcd945',
+      name : 'are you totes legit',
+      purpose: 'To ensure the PFI is not a scam',
+      format: {
+        jwt_vc: {
+          alg: ['ES256K', 'EdDSA']
+        }
+      },
+
       input_descriptors: [
         {
           id: 'bbdb9b7c-5754-4f46-b63b-590bada959e0',
+
           constraints: {
             fields: [
               {
@@ -114,6 +124,12 @@ const offering = Offering.create({
 
 await offering.sign(config.pfiDid)
 offering.validate()
+
+PresentationExchange.validateDefinition({ 
+  presentationDefinition: offering.data.requiredClaims 
+});
+
+console.log('Offering created and validated')
 
 // Initialize an array of hardcoded offerings
 const hardcodedOfferings: Offering[] = []

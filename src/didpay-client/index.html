@@ -277,10 +277,11 @@
             Quote,
             Order,
             Close,
-            OrderStatus,
-        } from "https://cdn.jsdelivr.net/npm/@tbdex/http-client@1.0.0/dist/browser.mjs";
+            OrderStatus
+        } from "https://cdn.jsdelivr.net/npm/@tbdex/http-client@1.0.1/dist/browser.mjs";
 
         import { DidDht } from "https://cdn.jsdelivr.net/npm/@web5/dids@1.0.0/dist/browser.mjs";
+        import { PresentationExchange } from "https://cdn.jsdelivr.net/npm/@web5/credentials@1.0.0/dist/browser.mjs";
         console.log(TbdexHttpClient);
         
         // create a did for the customer "wallet"
@@ -348,6 +349,19 @@
             const name = document.getElementById("name").value; // Get the name from the form
             const credential = await getVerifiableCredential(name); // Get the Verifiable Credential
 
+            console.log('credential', credential)
+
+            // print out as json:
+            console.log('requiredClaims', JSON.stringify(offerings[0].data.requiredClaims, null, 2))
+            
+
+            
+            PresentationExchange.satisfiesPresentationDefinition({
+                vcJwts: [credential],
+                presentationDefinition: offerings[0].data.requiredClaims,
+            });
+            
+
             const transferAmount =
                 document.getElementById("transferAmount").value; // Get the transfer amount from the form
             const rfq = Rfq.create({
@@ -392,12 +406,18 @@
 
             //Wait for Quote message to appear in the exchange
             while (!quote) {
-                console.log("rfq", rfq)
+                console.log("rfq", rfq.metadata.exchangeId)
+                console.log("did", did)
+                console.log("exchangeId", rfq.metadata.exchangeId)
+
+                
                 const exchange = await TbdexHttpClient.getExchange({
                     pfiDid: pfiDid,
                     did: did,
-                    exchangeId: rfq.exchangeId
+                    exchangeId: rfq.metadata.exchangeId
                 });
+
+                console.log("exchange", exchange);
 
                 quote = exchange.find(msg => msg instanceof Quote);
 

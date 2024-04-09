@@ -42,31 +42,21 @@ export const config: Config = {
 
 
 async function createOrLoadDid(filename: string): Promise<BearerDid> {
-  // Check if the file exists
-  try {
-    const data = await fs.readFile(filename, 'utf-8')
-    const portableDid: PortableDid = JSON.parse(data)
-    const bearerDid = await DidDht.import({ portableDid })
+
+    console.log('Creating new did for server...')
+    const bearerDid = await DidDht.create({
+      options: {
+        services: [
+          {
+            id: 'pfi',
+            type: 'PFI',
+            serviceEndpoint: process.env['HOST'] || 'http://localhost:9000',
+          },
+        ],
+      },
+    })
+    const portableDid = await bearerDid.export()
+    await fs.writeFile(filename, JSON.stringify(portableDid, null, 2))
     return bearerDid
-  } catch (error) {
-    // If the file doesn't exist, generate a new DID
-    if (error.code === 'ENOENT') {
-      console.log('Creating new did for server...')
-      const bearerDid = await DidDht.create({
-        options: {
-          services: [
-            {
-              id: 'pfi',
-              type: 'PFI',
-              serviceEndpoint: process.env['HOST'] || 'http://localhost:9000',
-            },
-          ],
-        },
-      })
-      const portableDid = await bearerDid.export()
-      await fs.writeFile(filename, JSON.stringify(portableDid, null, 2))
-      return bearerDid
-    }
-    console.error('Error reading from file:', error)
-  }
+  
 }

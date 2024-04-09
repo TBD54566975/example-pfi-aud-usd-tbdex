@@ -1,7 +1,7 @@
 import './polyfills.js'
 import { OfferingRepository } from './offerings.js'
 
-import { Rfq, Order } from '@tbdex/http-server'
+import { Rfq, Order, TbdexHttpClient } from '@tbdex/http-server'
 import { Quote, OrderStatus, Close } from '@tbdex/http-server'
 
 import log from './logger.js'
@@ -76,6 +76,7 @@ httpApi.api.use(redirectPostToRfq())
 
 // provide the quote
 httpApi.onCreateExchange(async (ctx, rfq: Rfq) => {
+
   console.log('RFQ')
   await ExchangeRepository.addMessage(rfq)
   const offering = await OfferingRepository.getOffering({
@@ -99,6 +100,7 @@ httpApi.onCreateExchange(async (ctx, rfq: Rfq) => {
         from: config.pfiDid.uri,
         to: rfq.from,
         exchangeId: rfq.exchangeId,
+        protocol: '1.0'
       },
       data: {
         expiresAt: new Date(2028, 4, 1).toISOString(),

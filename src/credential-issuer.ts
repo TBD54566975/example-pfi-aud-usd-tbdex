@@ -8,23 +8,11 @@ import fuzzysort from 'fuzzysort'
 import fs from 'fs/promises'
 
 async function createOrLoadDid(filename: string): Promise<BearerDid> {
-  // Check if the file exists
-  try {
-    const data = await fs.readFile(filename, 'utf-8')
-    const portableDid: PortableDid = JSON.parse(data)
-    const bearerDid = await DidDht.import({ portableDid })
-    return bearerDid
-  } catch (error) {
-    // If the file doesn't exist, generate a new DID
-    if (error.code === 'ENOENT') {
       const bearerDid = await DidDht.create({
       })
       const portableDid = await bearerDid.export()
       await fs.writeFile(filename, JSON.stringify(portableDid, null, 2))
-      return bearerDid
-    }
-    console.error('Error reading from file:', error)
-  }
+      return bearerDid    
 }
 
 // load issuer's did from a file called issuer-did.txt
@@ -126,6 +114,8 @@ export async function requestCredential(
   })
 
   const vcJwt = await vc.sign({ did: issuer })
+
+  console.log('vcJwt:', vcJwt)
 
   return vcJwt
 }
