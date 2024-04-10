@@ -39,6 +39,7 @@
     "eslint": "8.46.0",
     "kysely-codegen": "0.10.1",
     "mocha": "10.2.0",
+    "puppeteer": "^22.6.3",
     "rimraf": "5.0.1",
     "sinon": "15.2.0",
     "supertest": "6.3.3",
@@ -50,6 +51,8 @@
     "lint": "eslint . --ext .ts --max-warnings 0",
     "lint:fix": "eslint . --ext .ts --fix",
     "server": "npm run compile && node --enable-source-maps dist/main.js",
-    "test": "rimraf dist/tests && npm run compile && node --test"
+    "test": "rimraf dist/tests && npm run compile && node --test",    
+    "test:e2e": "node src/test_end2end.cjs"
+        
   }
 }
