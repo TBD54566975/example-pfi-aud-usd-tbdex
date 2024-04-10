@@ -36,14 +36,6 @@ jobs:
       uses: actions/setup-node@v3
       with:
         node-version: ${{ matrix.node-version }}
-    - name: Install dbmate
-      run: |
-        curl -fsSL https://github.com/amacneil/dbmate/releases/download/v1.12.1/dbmate-linux-amd64 -o dbmate
-        chmod +x dbmate
-        sudo mv dbmate /usr/local/bin      
-    - name: Run migration scripts
-      run: |
-        ./db/scripts/migrate
     - name: Install dependencies
       run: npm install
   

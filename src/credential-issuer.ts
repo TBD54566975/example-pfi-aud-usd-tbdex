@@ -15,10 +15,12 @@ async function createOrLoadDid(filename: string): Promise<BearerDid> {
       return bearerDid    
 }
 
-// load issuer's did from a file called issuer-did.txt
+
 const issuer: BearerDid = await createOrLoadDid('issuer.json')
 // write issuer did to file so server can trust it:
-await fs.writeFile('issuer-did.txt', issuer.uri)
+
+
+export const issuerDid = issuer.uri
 
 type SanctionEntry = {
   name: string;

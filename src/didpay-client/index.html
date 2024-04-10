@@ -278,7 +278,7 @@
             Order,
             Close,
             OrderStatus
-        } from "https://cdn.jsdelivr.net/npm/@tbdex/http-client@1.0.1/dist/browser.mjs";
+        } from "https://cdn.jsdelivr.net/npm/@tbdex/http-client@1.0.2/dist/browser.mjs";
 
         import { DidDht } from "https://cdn.jsdelivr.net/npm/@web5/dids@1.0.0/dist/browser.mjs";
         import { PresentationExchange } from "https://cdn.jsdelivr.net/npm/@web5/credentials@1.0.0/dist/browser.mjs";
@@ -455,9 +455,8 @@
                 });
 
                 await order.sign(did);
-                const orderResponse = await TbdexHttpClient.sendMessage({
-                    message: order,
-                });
+                const orderResponse = await TbdexHttpClient.submitOrder(order);
+                
                 console.log("we have an order response");
                 console.log(
                     "orderResponse",

@@ -1,7 +1,7 @@
 import './polyfills.js'
 import { OfferingRepository } from './offerings.js'
 
-import { Rfq, Order, TbdexHttpClient } from '@tbdex/http-server'
+import { Rfq, Order } from '@tbdex/http-server'
 import { Quote, OrderStatus, Close } from '@tbdex/http-server'
 
 import log from './logger.js'
@@ -136,6 +136,8 @@ httpApi.onSubmitOrder(async (ctx, order: Order) => {
 
   const payinAmount =
     '' + Math.round(parseFloat(quote.data.payin.amount) * 100)
+
+  console.log('pay hash', rfq.data.payin)
 
   let response = await fetch('https://test-api.pinpayments.com/1/charges', {
     method: 'POST',

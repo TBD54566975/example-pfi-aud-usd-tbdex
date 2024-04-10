@@ -2,9 +2,10 @@ import { OfferingsApi, Offering } from '@tbdex/http-server'
 import { config } from './config.js'
 import fs from 'fs/promises'
 import { PresentationExchange } from '@web5/credentials'
+import { issuerDid } from './credential-issuer.js'
 
 // load issuer's did from a file called issuer-did.txt
-const issuer = await fs.readFile('issuer-did.txt', 'utf-8')
+const issuer = issuerDid
 
 const offering = Offering.create({
   metadata: {
