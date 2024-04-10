@@ -273,35 +273,19 @@
     <script type="module">
         import {
             TbdexHttpClient,
-            DevTools,
             Rfq,
             Quote,
             Order,
             Close,
-            OrderStatus,
-        } from "https://cdn.jsdelivr.net/npm/@tbdex/http-client@0.26.0/dist/browser.mjs";
+            OrderStatus
+        } from "https://cdn.jsdelivr.net/npm/@tbdex/http-client@1.0.2/dist/browser.mjs";
+
+        import { DidDht } from "https://cdn.jsdelivr.net/npm/@web5/dids@1.0.0/dist/browser.mjs";
+        import { PresentationExchange } from "https://cdn.jsdelivr.net/npm/@web5/credentials@1.0.0/dist/browser.mjs";
         console.log(TbdexHttpClient);
-
-        async function createOrLoadDid() {
-            return await DevTools.createDid();
-            try {
-                // Check if the DID exists in local storage
-                const data = localStorage.getItem("did");
-                if (data) {
-                    return JSON.parse(data);
-                } else {
-                    // If the DID doesn't exist, generate a new DID
-                    const did = await DevTools.createDid();
-                    localStorage.setItem("did", JSON.stringify(did));
-                    return did;
-                }
-            } catch (error) {
-                console.error("Error with Local Storage:", error);
-            }
-        }
-
-        // create or load the customer did
-        const did = await createOrLoadDid();
+        
+        // create a did for the customer "wallet"
+        const did = await DidDht.create();
         console.log("customer id", did.did);
 
         // load the PFI (liquidity node) did from http://localhost:9000/did
@@ -319,6 +303,7 @@
 
         // show the offerings on the page
         async function showOfferings(data) {
+            console.log(data)
             const offeringsContainer =
                 document.getElementById("offeringsContainer");
             data.forEach((offering) => {
@@ -337,11 +322,11 @@
                 offeringElement.appendChild(description);
 
                 const payoutCurrency = document.createElement("p");
-                payoutCurrency.textContent = `Payout Currency: ${offering.data.payoutCurrency.currencyCode}`;
+                payoutCurrency.textContent = `Payout Currency: ${offering.data.payout.currencyCode}`;
                 offeringElement.appendChild(payoutCurrency);
 
                 const payinMethods = document.createElement("p");
-                payinMethods.textContent = `Pay-in Methods: ${offering.data.payinMethods.map((m) => m.kind).join(", ")}`;
+                payinMethods.textContent = `Pay-in Methods: ${offering.data.payin.methods.map((m) => m.kind).join(", ")}`;
                 offeringElement.appendChild(payinMethods);
 
                 offeringsContainer.appendChild(offeringElement);
@@ -353,7 +338,7 @@
         // Function to get Verifiable Credential
         async function getVerifiableCredential(name) {
             return await fetch(
-                `http://localhost:9000/vc?name=${name}&country=Australia&did=${did.id}`,
+                `http://localhost:9000/vc?name=${name}&country=Australia&did=${did.uri}`,
             ).then((r) => r.text());
         }
 
@@ -364,14 +349,29 @@
             const name = document.getElementById("name").value; // Get the name from the form
             const credential = await getVerifiableCredential(name); // Get the Verifiable Credential
 
+            console.log('credential', credential)
+
+            // print out as json:
+            console.log('requiredClaims', JSON.stringify(offerings[0].data.requiredClaims, null, 2))
+            
+
+            
+            PresentationExchange.satisfiesPresentationDefinition({
+                vcJwts: [credential],
+                presentationDefinition: offerings[0].data.requiredClaims,
+            });
+            
+
             const transferAmount =
                 document.getElementById("transferAmount").value; // Get the transfer amount from the form
             const rfq = Rfq.create({
-                metadata: { from: did.uri, to: pfiDid },
+                metadata: { from: did.uri, 
+                            to: offerings[0].metadata.from,
+                            protocol: "1.0" },
                 data: {
-                    offeringId: offerings[0].id,
-                    payinAmount: transferAmount,
-                    payinMethod: {
+                    offeringId: offerings[0].metadata.id,
+                    payin: {
+                        amount: transferAmount,
                         kind: "CREDIT_CARD",
                         paymentDetails: {
                             cc_number: document.getElementById("number").value,
@@ -383,7 +383,7 @@
                             name: document.getElementById("name").value,
                         },
                     },
-                    payoutMethod: {
+                    payout: {
                         kind: "AUSTRALIAN_BANK_ACCOUNT",
                         paymentDetails: {
                             accountNumber: "987654321", // replace with actual account number
@@ -397,26 +397,36 @@
 
             await rfq.sign(did);
 
-            await TbdexHttpClient.sendMessage({
-                message: rfq,
-                replyTo: did.uri,
-            });
+            await TbdexHttpClient.createExchange(
+                rfq,
+            );
             console.log("sent RFQ: ", JSON.stringify(rfq, null, 2));
 
-            //
-            //
-            // All interaction with the PFI happens in the context of an exchange.
-            // This is where for example a quote would show up in result to an RFQ:
-            const exchanges = await TbdexHttpClient.getExchanges({
-                pfiDid: pfiDid,
-                did: did,
-                filter: { id: rfq.exchangeId },
-            });
+            let quote;
 
-            console.log("got exchanges:", JSON.stringify(exchanges, null, 2));
-            const [exchange] = exchanges;
-            // find the quote
-            const quote = exchange.find((message) => message instanceof Quote);
+            //Wait for Quote message to appear in the exchange
+            while (!quote) {
+                console.log("rfq", rfq.metadata.exchangeId)
+                console.log("did", did)
+                console.log("exchangeId", rfq.metadata.exchangeId)
+
+                
+                const exchange = await TbdexHttpClient.getExchange({
+                    pfiDid: pfiDid,
+                    did: did,
+                    exchangeId: rfq.metadata.exchangeId
+                });
+
+                console.log("exchange", exchange);
+
+                quote = exchange.find(msg => msg instanceof Quote);
+
+                if (!quote) {
+                    // Wait 2 seconds before making another request
+                    await new Promise(resolve => setTimeout(resolve, 2000));
+                }
+            }
+
             console.log("quote", quote);
             // show the quote on the page
             const quoteContainer = document.getElementById("quoteContainer");
@@ -445,9 +455,8 @@
                 });
 
                 await order.sign(did);
-                const orderResponse = await TbdexHttpClient.sendMessage({
-                    message: order,
-                });
+                const orderResponse = await TbdexHttpClient.submitOrder(order);
+                
                 console.log("we have an order response");
                 console.log(
                     "orderResponse",

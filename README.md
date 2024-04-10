@@ -11,7 +11,7 @@ This example will:
 See [index.html](src/didpay-client/index.html) for the client code and [main.ts](src/main.ts) for the liquidity node code (server).
 
 NOTE: this is not using market rates, or anything sensible, and is not intended to showcase all regulatory requirements that must be fulfilled. This is for illustrative purposes only, not production use.
-For a more general exemplar for a PFI liquidity node, please take a look at: https://github.com/TBD54566975/tbdex-pfi-exemplar/
+For a more general exemplar for a PFI liquidity node, please take a look at: https://github.com/TBD54566975/tbdex-pfi-exemplar/ (which also includes a database, this one does not).
 
 ![image](https://github.com/TBD54566975/example-pfi-aud-usd-tbdex/assets/14976/6db08cbb-c0f0-4881-a120-214c33a60443)
 
@@ -32,12 +32,6 @@ If you don't have `node` installed, feel free to choose whichever installation a
 
 Once you have installed `nvm`, install the desired node version with `nvm install vX.Y.Z`.
 
-## Docker
-Docker is used to spin up a local mysql container. Docker for Mac can be installed from [here](https://docs.docker.com/desktop/install/mac-install/)
-
-## `dbmate`
-dbmate is used to run database migrations. follow install instructions for your OS: [here](https://github.com/amacneil/dbmate?tab=readme-ov-file#installation)
-
 
 ## Step 0: Setup server
 
@@ -45,16 +39,7 @@ dbmate is used to run database migrations. follow install instructions for your 
 
 > 💡 Make sure you have all the [prerequisites](#development-prerequisites)
 
-1) Go to [pin payments](https://pinpayments.com/) sign up and get a test api secret key, then `export SEC_PIN_PAYMENTS_SECRET_KEY=(secret key here)` (or you can use a .env file).
-
-2) Setup the database:
-
-* run `./db/scripts/start-pg` from your command line to start a psql container.
-
-* run `./db/scripts/migrate` to perform database migrations.
-(This only needs to be done once and then whenever changes are made in db/migrations)
-
-* run `npm install` to install all project dependencies
+Go to [pin payments](https://pinpayments.com/) sign up and get a test api secret key, then `export SEC_PIN_PAYMENTS_SECRET_KEY=(secret key here)` (or you can use a .env file).
 
 ## Step 1: Run liquidity node (server)
 
