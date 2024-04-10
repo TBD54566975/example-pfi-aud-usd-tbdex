@@ -77,7 +77,7 @@ httpApi.api.use(redirectPostToRfq())
 // provide the quote
 httpApi.onCreateExchange(async (ctx, rfq: Rfq) => {
 
-  console.log('RFQ')
+  console.log('RFQ', JSON.stringify(rfq, null, 2))
   await ExchangeRepository.addMessage(rfq)
   const offering = await OfferingRepository.getOffering({
     id: rfq.data.offeringId,
@@ -137,7 +137,8 @@ httpApi.onSubmitOrder(async (ctx, order: Order) => {
   const payinAmount =
     '' + Math.round(parseFloat(quote.data.payin.amount) * 100)
 
-  console.log('pay hash', rfq.data.payin)
+
+
 
   let response = await fetch('https://test-api.pinpayments.com/1/charges', {
     method: 'POST',
@@ -152,11 +153,11 @@ httpApi.onSubmitOrder(async (ctx, order: Order) => {
       description: 'For remittances',
       ip_address: '203.192.1.172',
       email: 'test@testing.com',
-      'card[number]': rfq.data.payin.paymentDetailsHash['cc_number'],
-      'card[expiry_month]': rfq.data.payin.paymentDetailsHash['expiry_month'],
-      'card[expiry_year]': rfq.data.payin.paymentDetailsHash['expiry_year'],
-      'card[cvc]': rfq.data.payin.paymentDetailsHash['cvc'],
-      'card[name]': rfq.data.payin.paymentDetailsHash['name'],
+      'card[number]': rfq.privateData.payin.paymentDetails['cc_number'],
+      'card[expiry_month]': rfq.privateData.payin.paymentDetails['expiry_month'],
+      'card[expiry_year]': rfq.privateData.payin.paymentDetails['expiry_year'],
+      'card[cvc]': rfq.privateData.payin.paymentDetails['cvc'],
+      'card[name]': rfq.privateData.payin.paymentDetails['name'],
       'card[address_line1]': 'Nunya',
       'card[address_city]': 'Bidnis',
       'card[address_country]': 'USA',
@@ -188,10 +189,10 @@ httpApi.onSubmitOrder(async (ctx, order: Order) => {
     body: new URLSearchParams({
       email: 'roland@pinpayments.com',
       name: 'Mr Roland Robot',
-      'bank_account[name]': rfq.data.payout.paymentDetailsHash['accountName'],
-      'bank_account[bsb]': rfq.data.payout.paymentDetailsHash['bsbNumber'],
+      'bank_account[name]': rfq.privateData.payout.paymentDetails['accountName'],
+      'bank_account[bsb]': rfq.privateData.payout.paymentDetails['bsbNumber'],
       'bank_account[number]':
-        rfq.data.payout.paymentDetailsHash['accountNumber'],
+      rfq.privateData.payout.paymentDetails['accountNumber'],
     }),
   })
 
